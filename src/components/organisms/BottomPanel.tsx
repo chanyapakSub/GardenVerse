@@ -1,0 +1,114 @@
+"use client";
+
+import { Sun, Wind, Droplets, Plus, ShieldCheck, Gift } from "lucide-react";
+import { myPlants } from "@/lib/mockData";
+import Image from "next/image";
+
+export default function BottomPanel() {
+  return (
+    <div className="flex gap-4 h-[140px] shrink-0">
+      
+      {/* Weather Card */}
+      <div className="w-[200px] bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <Sun className="w-10 h-10 text-yellow-400 fill-yellow-400" />
+          <div className="flex flex-col">
+            <span className="text-2xl font-bold text-gray-800 leading-none">32°C</span>
+            <span className="text-xs text-gray-500 font-medium">แดดจัด</span>
+          </div>
+        </div>
+        
+        <div className="flex justify-between items-end mt-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] text-gray-500 font-medium">ความชื้น</span>
+            <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-sm">
+              <Droplets className="w-3.5 h-3.5 text-blue-400" />
+              60%
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] text-gray-500 font-medium">ลม</span>
+            <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-sm">
+              <Wind className="w-3.5 h-3.5 text-gray-400" />
+              12 km/h
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Plants Scroll List */}
+      <div className="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col">
+        <h3 className="text-[14px] font-bold text-gray-800 mb-3">พืชในสวนของคุณ (12)</h3>
+        
+        <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-1 items-center">
+          {myPlants.map((plant) => (
+            <div 
+              key={plant.id} 
+              className={`flex flex-col items-center gap-2 min-w-[70px] shrink-0 ${
+                plant.active ? "bg-green-50/50 p-2 -m-2 rounded-xl border border-green-200" : ""
+              }`}
+            >
+              <div className="w-14 h-14 relative rounded-full overflow-hidden shadow-sm border border-gray-100 bg-white">
+                <Image 
+                  src={plant.img} 
+                  alt={plant.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <span className={`text-[12px] font-medium ${plant.active ? "text-green-700" : "text-gray-600"}`}>
+                {plant.name}
+              </span>
+            </div>
+          ))}
+          
+          <button className="flex flex-col items-center justify-center gap-2 min-w-[70px] shrink-0 opacity-70 hover:opacity-100 transition-opacity">
+            <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 bg-gray-50">
+              <Plus className="w-6 h-6" />
+            </div>
+            <span className="text-[12px] font-medium text-gray-500">เพิ่มพืช</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Daily Tasks */}
+      <div className="w-[300px] bg-white rounded-2xl p-4 shadow-sm border border-gray-100 shrink-0 flex flex-col">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-[14px] font-bold text-gray-800">ภารกิจประจำวัน</h3>
+          <a href="#" className="text-xs text-green-600 font-medium">ดูทั้งหมด</a>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center border border-orange-100 text-orange-500">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5">
+              <span className="text-[13px] font-bold text-gray-800">รดน้ำพืช 5 ต้น</span>
+              <div className="w-full bg-gray-100 rounded-full h-2 relative overflow-hidden">
+                <div className="bg-green-500 h-full absolute left-0 top-0 w-3/5 rounded-full"></div>
+              </div>
+            </div>
+            <span className="text-[12px] font-semibold text-gray-500 mt-5">3/5</span>
+          </div>
+
+          <div className="flex items-center justify-between mt-auto bg-gray-50 px-3 py-2 rounded-xl">
+            <span className="text-[11px] font-medium text-gray-500">รางวัล</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-[12px] font-bold text-gray-700">
+                <div className="w-4 h-4 rounded-full bg-yellow-400 text-white flex items-center justify-center text-[8px]">C</div>
+                50
+              </div>
+              <div className="flex items-center gap-1 text-[12px] font-bold text-gray-700">
+                <div className="w-4 h-4 rounded-full bg-blue-400 text-white flex items-center justify-center text-[8px]">D</div>
+                10
+              </div>
+              <Gift className="w-4 h-4 text-green-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}
