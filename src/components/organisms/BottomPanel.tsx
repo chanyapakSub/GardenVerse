@@ -4,9 +4,36 @@ import { Sun, Wind, Droplets, Plus, ShieldCheck, Gift } from "lucide-react";
 import { myPlants } from "@/lib/mockData";
 import Image from "next/image";
 import { useStore } from "@/store/useStore";
+import { useEffect, useState } from "react";
 
 export default function BottomPanel() {
   const { openAddModal } = useStore();
+  const [temperature, setTemperature] = useState<number>(32);
+  const [humidity, setHumidity] = useState<number>(60);
+
+  useEffect(() => {
+    const fetchSensorData = async () => {
+      try {
+        const response = await fetch('https://gardenverse-a21d0-default-rtdb.asia-southeast1.firebasedatabase.app/readings.json?orderBy="$key"&limitToLast=1');
+        const data = await response.json();
+        if (data) {
+          const key = Object.keys(data)[0];
+          const latestReading = data[key];
+          if (latestReading) {
+            setTemperature(latestReading.temperature);
+            setHumidity(latestReading.humidity);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching sensor data:", error);
+      }
+    };
+
+    fetchSensorData();
+    const interval = setInterval(fetchSensorData, 5000); // Fetch every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex gap-4 h-[140px] shrink-0">
@@ -16,8 +43,8 @@ export default function BottomPanel() {
         <div className="flex items-center gap-3">
           <Sun className="w-10 h-10 text-yellow-400 fill-yellow-400" />
           <div className="flex flex-col">
-            <span className="text-2xl font-bold text-gray-800 leading-none">32°C</span>
-            <span className="text-xs text-gray-500 font-medium">แดดจัด</span>
+            <span className="text-2xl font-bold text-gray-800 leading-none">{temperature.toFixed(1)}°C</span>
+            <span className="text-xs text-gray-500 font-medium">ปัจจุบัน</span>
           </div>
         </div>
         
@@ -26,7 +53,7 @@ export default function BottomPanel() {
             <span className="text-[11px] text-gray-500 font-medium">ความชื้น</span>
             <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-sm">
               <Droplets className="w-3.5 h-3.5 text-blue-400" />
-              60%
+              {humidity.toFixed(1)}%
             </div>
           </div>
           <div className="flex flex-col gap-1">
