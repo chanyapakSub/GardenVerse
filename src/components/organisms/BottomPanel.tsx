@@ -3,8 +3,11 @@
 import { Sun, Wind, Droplets, Plus, ShieldCheck, Gift } from "lucide-react";
 import { myPlants } from "@/lib/mockData";
 import Image from "next/image";
+import { useStore } from "@/store/useStore";
 
 export default function BottomPanel() {
+  const { openAddModal } = useStore();
+
   return (
     <div className="flex gap-4 h-[140px] shrink-0">
       
@@ -62,7 +65,10 @@ export default function BottomPanel() {
             </div>
           ))}
           
-          <button className="flex flex-col items-center justify-center gap-2 min-w-[70px] shrink-0 opacity-70 hover:opacity-100 transition-opacity">
+          <button 
+            onClick={openAddModal}
+            className="flex flex-col items-center justify-center gap-2 min-w-[70px] shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+          >
             <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 bg-gray-50">
               <Plus className="w-6 h-6" />
             </div>

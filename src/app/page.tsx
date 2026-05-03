@@ -2,7 +2,8 @@ import Navbar from "@/components/organisms/Navbar";
 import Sidebar from "@/components/organisms/Sidebar";
 import PlantDetailPanel from "@/components/organisms/PlantDetailPanel";
 import BottomPanel from "@/components/organisms/BottomPanel";
-import Image from "next/image";
+import Garden3D from "@/components/organisms/Garden3D";
+import AddModal from "@/components/organisms/AddModal";
 
 export default function Home() {
   return (
@@ -18,15 +19,7 @@ export default function Home() {
 
           {/* Main Content Area */}
           <div className="flex-1 bg-white rounded-2xl overflow-hidden relative shadow-sm border border-gray-100">
-            <Image 
-              src="https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=2070&auto=format&fit=crop"
-              alt="Greenhouse"
-              fill
-              className="object-cover"
-              priority
-            />
-            {/* Overlay Gradient for readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+            <Garden3D />
             
             {/* Wooden Sign Overlay */}
             <div className="absolute bottom-10 left-10">
@@ -46,6 +39,9 @@ export default function Home() {
         {/* Bottom Area */}
         <BottomPanel />
       </main>
+
+      {/* Modals */}
+      <AddModal />
     </div>
   );
 }
