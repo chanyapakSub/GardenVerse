@@ -1,7 +1,8 @@
 "use client";
 
-import { Pencil, Settings, Clock, List, Info, Sun, Droplets, Thermometer, Box, ChevronDown } from "lucide-react";
+import { Pencil, Settings, Clock, List, Sun, Droplets, Thermometer, Box, ChevronDown } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function PlantDetailPanel() {
   return (
@@ -98,13 +99,20 @@ export default function PlantDetailPanel() {
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="mt-auto pt-4">
+      {/* Action Buttons */}
+      <div className="mt-auto pt-4 flex flex-col gap-2">
         <button className="w-full bg-[#3b8045] hover:bg-[#2d6635] text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md shadow-green-900/10 transition-colors">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22V12"/><path d="M12 12C12 12 17 8 17 4"/><path d="M17 4C17 4 20 6 20 10 20 12.5 17 14 17 14"/><path d="M12 12C12 12 7 8 7 4"/><path d="M7 4C7 4 4 6 4 10 4 12.5 7 14 7 14"/></svg>
           ดูแลตอนนี้
           <ChevronDown className="w-4 h-4" />
         </button>
+        <Link
+          href="/history"
+          className="w-full border border-gray-200 hover:bg-gray-50 text-gray-700 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-colors text-sm"
+        >
+          <Clock className="w-4 h-4 text-gray-400" />
+          ดูประวัติการดูแล
+        </Link>
       </div>
 
     </div>

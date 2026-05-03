@@ -1,5 +1,6 @@
 import { Bell, Droplet, Coins } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Navbar() {
   return (
@@ -17,10 +18,10 @@ export default function Navbar() {
 
       {/* Middle section: Links */}
       <div className="flex items-center gap-8 text-[15px] font-medium">
-        <a href="#" className="text-green-600 border-b-2 border-green-600 pb-1 relative top-[2px]">สวนของฉัน</a>
-        <a href="#" className="text-gray-500 hover:text-gray-800 transition-colors">พืชของฉัน</a>
-        <a href="#" className="text-gray-500 hover:text-gray-800 transition-colors">ประวัติการดูแล</a>
-        <a href="#" className="text-gray-500 hover:text-gray-800 transition-colors">ร้านค้า</a>
+        <Link href="/" className="text-gray-500 hover:text-green-600 transition-colors">สวนของฉัน</Link>
+        <Link href="#" className="text-gray-500 hover:text-green-600 transition-colors">พืชของฉัน</Link>
+        <Link href="/history" className="text-gray-500 hover:text-green-600 transition-colors">ประวัติการดูแล</Link>
+        <Link href="#" className="text-gray-500 hover:text-green-600 transition-colors">ร้านค้า</Link>
       </div>
 
       {/* Right section: Stats & Profile */}

@@ -1,10 +1,11 @@
 "use client";
 
-import { Sun, Wind, Droplets, Plus, ShieldCheck, Gift } from "lucide-react";
+import { Wind, Plus, ShieldCheck, Gift } from "lucide-react";
 import { myPlants } from "@/lib/mockData";
 import Image from "next/image";
 import { useStore } from "@/store/useStore";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { WeatherWidget } from "@/components/molecules/WeatherWidget";
 
 export default function BottomPanel() {
   const { openAddModal } = useStore();
@@ -39,32 +40,7 @@ export default function BottomPanel() {
     <div className="flex gap-4 h-[140px] shrink-0">
       
       {/* Weather Card */}
-      <div className="w-[200px] bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <Sun className="w-10 h-10 text-yellow-400 fill-yellow-400" />
-          <div className="flex flex-col">
-            <span className="text-2xl font-bold text-gray-800 leading-none">{temperature.toFixed(1)}°C</span>
-            <span className="text-xs text-gray-500 font-medium">ปัจจุบัน</span>
-          </div>
-        </div>
-        
-        <div className="flex justify-between items-end mt-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] text-gray-500 font-medium">ความชื้น</span>
-            <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-sm">
-              <Droplets className="w-3.5 h-3.5 text-blue-400" />
-              {humidity.toFixed(1)}%
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] text-gray-500 font-medium">ลม</span>
-            <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-sm">
-              <Wind className="w-3.5 h-3.5 text-gray-400" />
-              12 km/h
-            </div>
-          </div>
-        </div>
-      </div>
+      <WeatherWidget temperature={temperature} humidity={humidity} />
 
       {/* Plants Scroll List */}
       <div className="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col">
