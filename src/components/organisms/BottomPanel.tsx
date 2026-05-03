@@ -59,7 +59,7 @@ export default function BottomPanel() {
                   src={plant.img} 
                   alt={plant.name}
                   fill
-                  className="object-cover"
+                  className="object-contain p-1"
                 />
               </div>
               <span className={`text-[12px] font-medium ${plant.active ? "text-green-700" : "text-gray-600"}`}>

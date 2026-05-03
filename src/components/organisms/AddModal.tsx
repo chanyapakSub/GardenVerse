@@ -6,11 +6,13 @@ import Image from "next/image";
 import { useState } from "react";
 
 const plantTypes = [
-  { id: 1, name: "ทิวลิป", sci: "Tulipa spp.", img: "https://images.unsplash.com/photo-1520763185298-1b434c919102?w=150&h=150&fit=crop" },
-  { id: 2, name: "กุหลาบ", sci: "Rosa spp.", img: "https://images.unsplash.com/photo-1548811579-017fa2aca5ea?w=150&h=150&fit=crop" },
-  { id: 3, name: "ลาเวนเดอร์", sci: "Lavandula spp.", img: "https://images.unsplash.com/photo-1496062031456-07b8f162a322?w=150&h=150&fit=crop" },
-  { id: 4, name: "มะเขือเทศ", sci: "Solanum lycopersicum", img: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=150&h=150&fit=crop" },
-  { id: 5, name: "อื่นๆ (เพิ่มชนิดใหม่)", sci: "กำหนดพืชใหม่ด้วยตนเอง", img: "", isMore: true },
+  { id: 1, name: "ทิวลิป", sci: "Tulipa spp.", img: "/images/flower/Tilip.png" },
+  { id: 2, name: "กุหลาบ", sci: "Rosa spp.", img: "/images/flower/Rose.png" },
+  { id: 3, name: "ลาเวนเดอร์", sci: "Lavandula spp.", img: "/images/flower/Ravender.png" },
+  { id: 4, name: "มะเขือเทศ", sci: "Solanum lycopersicum", img: "/images/vegetable/Tomato.png" },
+  { id: 5, name: "ทานตะวัน", sci: "Helianthus annuus", img: "/images/flower/Tantawan.png" },
+  { id: 6, name: "ไฮเดรนเยีย", sci: "Hydrangea macrophylla", img: "/images/flower/Haidenyia.png" },
+  { id: 7, name: "อื่นๆ (เพิ่มชนิดใหม่)", sci: "กำหนดพืชใหม่ด้วยตนเอง", img: "", isMore: true },
 ];
 
 const filters = ["ทั้งหมด", "ไม้ดอก", "ผัก", "สมุนไพร"];

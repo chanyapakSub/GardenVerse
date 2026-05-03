@@ -49,7 +49,7 @@ export default function Navbar() {
         <div className="flex items-center gap-2 cursor-pointer relative">
           <div className="w-9 h-9 rounded-full bg-indigo-100 overflow-hidden border-2 border-white shadow-sm">
             <Image 
-              src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" 
+              src="/images/profile.png" 
               alt="User" 
               width={36} 
               height={36} 

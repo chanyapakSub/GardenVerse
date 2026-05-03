@@ -36,10 +36,10 @@ export const zones = [
 ];
 
 export const myPlants = [
-  { id: "p1", name: "ทิวลิป", active: true, img: "https://images.unsplash.com/photo-1520763185298-1b434c919102?w=150&h=150&fit=crop" },
-  { id: "p2", name: "กุหลาบ", img: "https://images.unsplash.com/photo-1548811579-017fa2aca5ea?w=150&h=150&fit=crop" },
-  { id: "p3", name: "ลาเวนเดอร์", img: "https://images.unsplash.com/photo-1496062031456-07b8f162a322?w=150&h=150&fit=crop" },
-  { id: "p4", name: "มะเขือเทศ", img: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=150&h=150&fit=crop" },
-  { id: "p5", name: "โหระพา", img: "https://images.unsplash.com/photo-1615485925600-97237c4fc1ec?w=150&h=150&fit=crop" },
-  { id: "p6", name: "ว่านหางจระเข้", img: "https://images.unsplash.com/photo-1596547609652-9cb5d8d739bb?w=150&h=150&fit=crop" },
+  { id: "p1", name: "ทิวลิป", active: true, img: "/images/flower/Tilip.png" },
+  { id: "p2", name: "กุหลาบ", img: "/images/flower/Rose.png" },
+  { id: "p3", name: "ลาเวนเดอร์", img: "/images/flower/Ravender.png" },
+  { id: "p4", name: "มะเขือเทศ", img: "/images/vegetable/Tomato.png" },
+  { id: "p5", name: "ทานตะวัน", img: "/images/flower/Tantawan.png" },
+  { id: "p6", name: "ไฮเดรนเยีย", img: "/images/flower/Haidenyia.png" },
 ];

@@ -34,10 +34,10 @@ export default function PlantDetailPanel() {
         {/* Plant Image */}
         <div className="w-24 h-28 relative rounded-xl overflow-hidden shrink-0">
           <Image 
-            src="https://images.unsplash.com/photo-1520763185298-1b434c919102?w=300&h=400&fit=crop"
+            src="/images/flower/Tilip.png"
             alt="Tulip"
             fill
-            className="object-cover"
+            className="object-cover object-top"
           />
         </div>
       </div>
