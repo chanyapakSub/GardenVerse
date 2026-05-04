@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Navbar from "@/components/organisms/Navbar";
 import ShopHeader from "@/components/organisms/ShopHeader";
 import ShopSearchCategories from "@/components/organisms/ShopSearchCategories";
 import ShopBanners from "@/components/organisms/ShopBanners";
 import ProductGrid from "@/components/organisms/ProductGrid";
-import CartSidebar from "@/components/organisms/CartSidebar";
+import CartSidebar, { CartItem } from "@/components/organisms/CartSidebar";
 import ShopFeatures from "@/components/organisms/ShopFeatures";
 import SuggestedProducts from "@/components/organisms/SuggestedProducts";
 
@@ -118,6 +119,40 @@ const BEST_SELLERS = [
 
 
 export default function ShopPage() {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  const handleAddToCart = (product: any) => {
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prev, {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        quantity: 1,
+      }];
+    });
+  };
+
+  const handleRemoveFromCart = (id: string) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleChangeQuantity = (id: string, quantity: number) => {
+    if (quantity <= 0) {
+      handleRemoveFromCart(id);
+      return;
+    }
+    setCartItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50/30">
       <Navbar />
@@ -134,20 +169,28 @@ export default function ShopPage() {
               title="แนะนำสำหรับคุณ" 
               products={RECOMMENDED_PRODUCTS} 
               viewAllLink="#" 
+              onAddToCart={handleAddToCart}
             />
             
             <ProductGrid 
               title="สินค้าขายดี" 
               products={BEST_SELLERS} 
               viewAllLink="#" 
+              onAddToCart={handleAddToCart}
             />
           </div>
 
           {/* Right Sidebar */}
-          <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 space-y-6 relative z-30">
-            <CartSidebar />
-            <ShopFeatures />
-            <SuggestedProducts />
+          <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 relative z-30">
+            <div className="sticky top-[88px] space-y-6 h-[calc(100vh-100px)] overflow-y-auto pb-4 pr-1 scrollbar-hide">
+              <CartSidebar 
+                cartItems={cartItems}
+                onRemoveFromCart={handleRemoveFromCart}
+                onChangeQuantity={handleChangeQuantity}
+              />
+              <ShopFeatures />
+              <SuggestedProducts />
+            </div>
           </div>
           
         </div>

@@ -17,9 +17,15 @@ interface ProductGridProps {
   title: string;
   products: Product[];
   viewAllLink?: string;
+  onAddToCart?: (product: Product) => void;
 }
 
-export default function ProductGrid({ title, products, viewAllLink = "#" }: ProductGridProps) {
+export default function ProductGrid({ 
+  title, 
+  products, 
+  viewAllLink = "#",
+  onAddToCart,
+}: ProductGridProps) {
   return (
     <div className="mb-8">
       {/* Header */}
@@ -33,7 +39,11 @@ export default function ProductGrid({ title, products, viewAllLink = "#" }: Prod
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {products.map((product) => (
-          <ProductCard key={product.id} {...product} />
+          <ProductCard 
+            key={product.id} 
+            {...product} 
+            onAddToCart={() => onAddToCart && onAddToCart(product)}
+          />
         ))}
       </div>
     </div>
