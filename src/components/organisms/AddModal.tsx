@@ -18,7 +18,7 @@ const plantTypes = [
 const filters = ["ทั้งหมด", "ไม้ดอก", "ผัก", "สมุนไพร"];
 
 export default function AddModal() {
-  const { isAddModalOpen, closeAddModal } = useStore();
+  const { isAddModalOpen, closeAddModal, addItem, updateItem, selectedItemId } = useStore();
   const [activeTab, setActiveTab] = useState("add-plant-type");
   const [activeFilter, setActiveFilter] = useState("ทั้งหมด");
   const [selectedPlant, setSelectedPlant] = useState<number | null>(null);
@@ -29,13 +29,40 @@ export default function AddModal() {
     temperature: false
   });
   const [customPlant, setCustomPlant] = useState({ name: "", sci: "" });
+  const [itemName, setItemName] = useState("");
+  const [itemZone, setItemZone] = useState("โซน A : ไม้ดอกเมืองหนาว");
+  const [selectedContainer, setSelectedContainer] = useState<"bed" | "pot">("bed");
 
   if (!isAddModalOpen) return null;
 
   const handleNextStep = () => {
-    if (activeTab === "add-plant-type") setActiveTab("add-bed");
-    else if (activeTab === "add-bed" || activeTab === "add-pot") setActiveTab("add-sensor");
-    else closeAddModal();
+    if (activeTab === "add-plant-type") {
+      if (selectedItemId) setActiveTab("add-sensor");
+      else setActiveTab("add-bed");
+    }
+    else if (activeTab === "add-bed" || activeTab === "add-pot") {
+      setSelectedContainer(activeTab === "add-bed" ? "bed" : "pot");
+      setActiveTab("add-sensor");
+    }
+    else {
+      if (selectedItemId) {
+        updateItem(selectedItemId, {
+          plantId: selectedPlant || 1,
+          name: itemName,
+          zone: itemZone
+        });
+      } else {
+        addItem({
+          id: Math.random().toString(),
+          type: selectedContainer,
+          plantId: selectedPlant || 1,
+          position: [(Math.random() - 0.5) * 5, 0, (Math.random() - 0.5) * 5],
+          name: itemName,
+          zone: itemZone
+        });
+      }
+      closeAddModal();
+    }
   };
 
   const toggleSensor = (key: keyof typeof sensors) => {
@@ -164,12 +191,12 @@ export default function AddModal() {
 
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">ชื่อ{activeTab === "add-bed" ? "แปลง" : "กระถาง"}</label>
-              <input type="text" placeholder={`เช่น ${activeTab === "add-bed" ? "แปลงทิวลิป 01" : "กระถางกุหลาบหน้าบ้าน"}`} className="w-full bg-white border border-gray-200 text-gray-800 rounded-xl py-3 px-4 outline-none focus:border-green-500" />
+              <input type="text" value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder={`เช่น ${activeTab === "add-bed" ? "แปลงทิวลิป 01" : "กระถางกุหลาบหน้าบ้าน"}`} className="w-full bg-white border border-gray-200 text-gray-800 rounded-xl py-3 px-4 outline-none focus:border-green-500" />
             </div>
             
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">ระบุโซนในโรงเรือน</label>
-              <select className="w-full bg-white border border-gray-200 text-gray-800 rounded-xl py-3 px-4 outline-none focus:border-green-500">
+              <select value={itemZone} onChange={(e) => setItemZone(e.target.value)} className="w-full bg-white border border-gray-200 text-gray-800 rounded-xl py-3 px-4 outline-none focus:border-green-500">
                 <option>โซน A : ไม้ดอกเมืองหนาว</option>
                 <option>โซน B : สมุนไพร</option>
                 <option>โซน C : ผักสวนครัว</option>
@@ -285,15 +312,17 @@ export default function AddModal() {
                 เลือกชนิดพืช
               </button>
               
-              <button 
-                onClick={() => setActiveTab("add-bed")}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
-                  (activeTab === "add-bed" || activeTab === "add-pot") ? "bg-green-50 text-green-700 font-bold shadow-sm" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
-              >
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${(activeTab === "add-bed" || activeTab === "add-pot") ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>2</div>
-                เลือกแปลง/กระถาง
-              </button>
+              {!selectedItemId && (
+                <button 
+                  onClick={() => setActiveTab("add-bed")}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
+                    (activeTab === "add-bed" || activeTab === "add-pot") ? "bg-green-50 text-green-700 font-bold shadow-sm" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${(activeTab === "add-bed" || activeTab === "add-pot") ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>2</div>
+                  เลือกแปลง/กระถาง
+                </button>
+              )}
 
               <button 
                 onClick={() => setActiveTab("add-sensor")}
@@ -301,7 +330,7 @@ export default function AddModal() {
                   activeTab === "add-sensor" ? "bg-green-50 text-green-700 font-bold shadow-sm" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${activeTab === "add-sensor" ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>3</div>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${activeTab === "add-sensor" ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>{selectedItemId ? "2" : "3"}</div>
                 เชื่อมต่อเซนเซอร์
               </button>
             </div>

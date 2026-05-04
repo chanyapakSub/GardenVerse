@@ -69,7 +69,7 @@ export default function BottomPanel() {
           ))}
           
           <button 
-            onClick={openAddModal}
+            onClick={() => openAddModal()}
             className="flex flex-col items-center justify-center gap-2 min-w-[70px] shrink-0 opacity-70 hover:opacity-100 transition-opacity"
           >
             <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 bg-gray-50">
