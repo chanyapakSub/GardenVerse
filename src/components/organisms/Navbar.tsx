@@ -7,11 +7,17 @@ export default function Navbar() {
     <nav className="bg-white px-6 py-3 flex items-center justify-between border-b border-gray-100 shadow-sm sticky top-0 z-50">
       {/* Left section: Logo */}
       <div className="flex items-center gap-2 w-[240px]">
-        <div className="text-green-600">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 22C12 22 4 16 4 10C4 6 7 4 10 4C11.5 4 12.5 5 13.5 6C14.5 5 15.5 4 17 4C20 4 23 6 23 10C23 16 15 22 15 22H12Z" fillOpacity="0.4" /><path d="M11 20V12C11 10 9 9 7 9C5 9 3 11 3 13C3 16 7 19 11 20Z"/></svg>
+        <div className="flex items-center justify-center">
+          <Image
+            src="/images/logo_main.png"
+            alt="GardenVerse Logo"
+            width={48}
+            height={48}
+            className="object-contain"
+          />
         </div>
         <div>
-          <h1 className="font-bold text-gray-800 leading-tight">My Garden</h1>
+          <h1 className="font-bold text-gray-800 leading-tight">GardenVerse</h1>
           <p className="text-[10px] text-gray-500 font-medium">Grow with happiness</p>
         </div>
       </div>
@@ -48,11 +54,11 @@ export default function Navbar() {
         {/* Profile */}
         <div className="flex items-center gap-2 cursor-pointer relative">
           <div className="w-9 h-9 rounded-full bg-indigo-100 overflow-hidden border-2 border-white shadow-sm">
-            <Image 
-              src="/images/profile.png" 
-              alt="User" 
-              width={36} 
-              height={36} 
+            <Image
+              src="/images/profile.png"
+              alt="User"
+              width={36}
+              height={36}
               className="object-cover"
             />
           </div>
