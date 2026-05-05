@@ -29,7 +29,7 @@ export default function Navbar() {
 
       {/* Middle section: Links */}
       <div className="flex items-center gap-8 text-[15px] font-medium h-full">
-        <Link href="/" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>สวนของฉัน</Link>
+        <Link href="/home" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/home" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>สวนของฉัน</Link>
         <Link href="#" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/plants" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>พืชของฉัน</Link>
         <Link href="/history" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/history" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>ประวัติการดูแล</Link>
         <Link href="/shop" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/shop" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>ร้านค้า</Link>

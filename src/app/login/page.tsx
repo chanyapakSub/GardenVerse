@@ -14,7 +14,7 @@ export default function LoginPage() {
     // Simulate setting an auth token/cookie
     document.cookie = "is_authenticated=true; path=/";
     // Redirect to home page
-    router.push("/");
+    router.push("/home");
   };
 
   return (
