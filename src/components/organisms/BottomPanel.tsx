@@ -46,12 +46,12 @@ export default function BottomPanel() {
       <div className="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col">
         <h3 className="text-[14px] font-bold text-gray-800 mb-3">พืชในสวนของคุณ (12)</h3>
         
-        <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-1 items-center">
+        <div className="flex gap-1 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1 -mx-1 items-center">
           {myPlants.map((plant) => (
             <div 
               key={plant.id} 
-              className={`flex flex-col items-center gap-2 min-w-[70px] shrink-0 ${
-                plant.active ? "bg-green-50/50 p-2 -m-2 rounded-xl border border-green-200" : ""
+              className={`flex flex-col items-center gap-2 min-w-[80px] shrink-0 p-2 rounded-xl border transition-colors ${
+                plant.active ? "bg-green-50/80 border-green-200 shadow-sm" : "border-transparent hover:bg-gray-50"
               }`}
             >
               <div className="w-14 h-14 relative rounded-full overflow-hidden shadow-sm border border-gray-100 bg-white">
@@ -62,7 +62,7 @@ export default function BottomPanel() {
                   className="object-contain p-1"
                 />
               </div>
-              <span className={`text-[12px] font-medium ${plant.active ? "text-green-700" : "text-gray-600"}`}>
+              <span className={`text-[12px] font-medium ${plant.active ? "text-green-700 font-bold" : "text-gray-600"}`}>
                 {plant.name}
               </span>
             </div>
@@ -70,12 +70,12 @@ export default function BottomPanel() {
           
           <button 
             onClick={() => openAddModal()}
-            className="flex flex-col items-center justify-center gap-2 min-w-[70px] shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+            className="flex flex-col items-center justify-center gap-2 min-w-[80px] shrink-0 p-2 opacity-70 hover:opacity-100 transition-opacity"
           >
-            <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 bg-gray-50">
+            <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 bg-gray-50 hover:bg-gray-100 transition-colors">
               <Plus className="w-6 h-6" />
             </div>
-            <span className="text-[12px] font-medium text-gray-500">เพิ่มพืช</span>
+            <span className="text-[12px] font-medium text-gray-500 mt-[2px]">เพิ่มพืช</span>
           </button>
         </div>
       </div>
