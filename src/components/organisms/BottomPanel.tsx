@@ -31,8 +31,7 @@ export default function BottomPanel() {
     };
 
     fetchSensorData();
-    const interval = setInterval(fetchSensorData, 5000); // Fetch every 5 seconds
-
+    const interval = setInterval(fetchSensorData, 5000);
     return () => clearInterval(interval);
   }, []);
 

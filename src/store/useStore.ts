@@ -4,6 +4,7 @@ export interface PlantItem {
   id: string;
   type: 'pot' | 'bed';
   plantId: number | null;
+  plantModel: string | null; // e.g. 'sunflower'
   position: [number, number, number];
   name?: string;
   zone?: string;
@@ -19,6 +20,9 @@ interface AppState {
   updateItem: (id: string, updates: Partial<PlantItem>) => void;
   placementMode: 'pot' | 'bed' | null;
   setPlacementMode: (mode: 'pot' | 'bed' | null) => void;
+  // Currently selected plant from the bottom panel
+  selectedPlantModel: string | null;
+  selectPlantModel: (model: string | null) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -32,5 +36,7 @@ export const useStore = create<AppState>((set) => ({
     items: state.items.map(item => item.id === id ? { ...item, ...updates } : item)
   })),
   placementMode: null,
-  setPlacementMode: (mode) => set({ placementMode: mode })
+  setPlacementMode: (mode) => set({ placementMode: mode }),
+  selectedPlantModel: null,
+  selectPlantModel: (model) => set({ selectedPlantModel: model }),
 }));
