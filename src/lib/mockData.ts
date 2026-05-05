@@ -38,7 +38,7 @@ export const zones = [
 export const myPlants = [
   { id: "p1", name: "ทิวลิป", active: true, img: "/images/flower/Tilip.png" },
   { id: "p2", name: "กุหลาบ", img: "/images/flower/Rose.png" },
-  { id: "p3", name: "ลาเวนเดอร์", img: "/images/flower/Ravender.png" },
+  { id: "p3", name: "ลาเวนเดอร์", img: "/images/flower/Lavender.png" },
   { id: "p4", name: "มะเขือเทศ", img: "/images/vegetable/Tomato.png" },
   { id: "p5", name: "ทานตะวัน", img: "/images/flower/Tantawan.png" },
   { id: "p6", name: "ไฮเดรนเยีย", img: "/images/flower/Haidenyia.png" },

@@ -8,7 +8,7 @@ import { useState } from "react";
 const plantTypes = [
   { id: 1, name: "ทิวลิป", sci: "Tulipa spp.", img: "/images/flower/Tilip.png" },
   { id: 2, name: "กุหลาบ", sci: "Rosa spp.", img: "/images/flower/Rose.png" },
-  { id: 3, name: "ลาเวนเดอร์", sci: "Lavandula spp.", img: "/images/flower/Ravender.png" },
+  { id: 3, name: "ลาเวนเดอร์", sci: "Lavandula spp.", img: "/images/flower/Lavender.png" },
   { id: 4, name: "มะเขือเทศ", sci: "Solanum lycopersicum", img: "/images/vegetable/Tomato.png" },
   { id: 5, name: "ทานตะวัน", sci: "Helianthus annuus", img: "/images/flower/Tantawan.png" },
   { id: 6, name: "ไฮเดรนเยีย", sci: "Hydrangea macrophylla", img: "/images/flower/Haidenyia.png" },
