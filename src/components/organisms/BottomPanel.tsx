@@ -39,7 +39,9 @@ export default function BottomPanel() {
     <div className="flex gap-4 h-[140px] shrink-0">
       
       {/* Weather Card */}
-      <WeatherWidget temperature={temperature} humidity={humidity} />
+      <div className="w-[200px] shrink-0 flex">
+        <WeatherWidget temperature={temperature} humidity={humidity} />
+      </div>
 
       {/* Plants Scroll List */}
       <div className="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col">

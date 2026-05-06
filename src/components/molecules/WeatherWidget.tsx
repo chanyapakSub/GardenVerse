@@ -7,7 +7,7 @@ interface WeatherWidgetProps {
 
 export function WeatherWidget({ temperature, humidity }: WeatherWidgetProps) {
   return (
-    <div className="w-[200px] bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between shrink-0">
+    <div className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between shrink-0">
       <div className="flex items-center gap-3">
         <Sun className="w-10 h-10 text-yellow-400 fill-yellow-400" />
         <div className="flex flex-col">
