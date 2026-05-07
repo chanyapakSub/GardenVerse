@@ -9,6 +9,11 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Form states
   const [identifier, setIdentifier] = useState(""); // For login (email or username)
@@ -117,6 +122,8 @@ export default function LoginPage() {
                 <input
                   type="text"
                   id="username"
+                  autoComplete="username"
+                  suppressHydrationWarning
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
@@ -139,6 +146,8 @@ export default function LoginPage() {
                 <input
                   type="text"
                   id="identifier"
+                  autoComplete="username email"
+                  suppressHydrationWarning
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
@@ -159,6 +168,8 @@ export default function LoginPage() {
                 <input
                   type="email"
                   id="email"
+                  autoComplete="email"
+                  suppressHydrationWarning
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
@@ -187,6 +198,8 @@ export default function LoginPage() {
               <input
                 type="password"
                 id="password"
+                autoComplete="current-password"
+                suppressHydrationWarning
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"

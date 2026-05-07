@@ -1,3 +1,7 @@
+"use client";
+
+"use client";
+
 import Navbar from "@/components/organisms/Navbar";
 import Sidebar from "@/components/organisms/Sidebar";
 import { WeatherWidget } from "@/components/molecules/WeatherWidget";
@@ -99,9 +103,9 @@ export default function PlantsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fa]">
       <Navbar />
-      
+
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 flex gap-4 h-[calc(100vh-80px)]">
-        
+
         {/* Left Sidebar */}
         <div className="w-[280px] h-full shrink-0 flex flex-col gap-4">
           <div className="flex-1 overflow-hidden">
@@ -112,7 +116,7 @@ export default function PlantsPage() {
 
         {/* Center Content */}
         <div className="flex-1 bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col p-6 overflow-y-auto custom-scrollbar">
-          
+
           {/* Header */}
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center gap-3">
@@ -144,9 +148,11 @@ export default function PlantsPage() {
           <div className="flex gap-3 mb-6">
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="ค้นหาชื่อพืช..." 
+              <input
+                type="text"
+                autoComplete="off"
+                suppressHydrationWarning
+                placeholder="ค้นหาชื่อพืช..."
                 className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:outline-none focus:border-green-300 focus:ring-1 focus:ring-green-300 transition-all"
               />
             </div>
@@ -173,17 +179,17 @@ export default function PlantsPage() {
                     <MoreVertical className="w-4 h-4" />
                   </button>
                 </div>
-                
+
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <Leaf className="w-3.5 h-3.5 text-green-600" />
                   <h3 className="font-bold text-gray-800 text-sm">{plant.name}</h3>
                 </div>
                 <p className="text-xs text-gray-400 italic mb-3">{plant.sciName}</p>
-                
+
                 <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit border ${plant.statusColor} mb-4`}>
                   {plant.status}
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2 text-[11px] mb-4">
                   <div>
                     <div className="text-gray-400 mb-0.5">อายุ</div>
@@ -194,7 +200,7 @@ export default function PlantsPage() {
                     <div className="text-gray-700 font-medium">{plant.planted}</div>
                   </div>
                 </div>
-                
+
                 <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
                   <div className="flex items-center gap-1 text-green-600 font-bold text-xs">
                     <Leaf className="w-3 h-3" /> {plant.water}
@@ -225,7 +231,7 @@ export default function PlantsPage() {
 
         {/* Right Sidebar */}
         <div className="w-[320px] shrink-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
-          
+
           {/* ภาพรวมพืช */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
             <h3 className="font-bold text-gray-800 text-sm mb-4">ภาพรวมพืช</h3>
