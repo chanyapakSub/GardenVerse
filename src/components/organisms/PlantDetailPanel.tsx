@@ -147,12 +147,29 @@ export default function PlantDetailPanel() {
           </div>
           <p className="text-sm text-gray-500 italic">{plant.scientificName}</p>
 
-          <div className="mt-3 flex items-center gap-2 bg-green-50 w-fit px-3 py-1 rounded-full border border-green-100">
-            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-            <span className="text-sm font-semibold text-green-700">
-              สุขภาพดี {selectedItem.health || 85}%
-            </span>
-          </div>
+          {(() => {
+                const h = selectedItem.health || 85;
+                if (h >= 80) return (
+                  <div className="mt-3 flex items-center gap-2 bg-green-50 w-fit px-3 py-1 rounded-full border border-green-100">
+                    <span className="text-sm font-semibold text-green-700">🌱 สุขภาพดีมาก</span>
+                  </div>
+                );
+                if (h >= 60) return (
+                  <div className="mt-3 flex items-center gap-2 bg-blue-50 w-fit px-3 py-1 rounded-full border border-blue-100">
+                    <span className="text-sm font-semibold text-blue-700">🌿 สุขภาพดี</span>
+                  </div>
+                );
+                if (h >= 40) return (
+                  <div className="mt-3 flex items-center gap-2 bg-yellow-50 w-fit px-3 py-1 rounded-full border border-yellow-100">
+                    <span className="text-sm font-semibold text-yellow-700">🍃 สุขภาพปานกลาง</span>
+                  </div>
+                );
+                return (
+                  <div className="mt-3 flex items-center gap-2 bg-red-50 w-fit px-3 py-1 rounded-full border border-red-100">
+                    <span className="text-sm font-semibold text-red-700">🍂 ต้องดูแลเพิ่ม</span>
+                  </div>
+                );
+              })()}
 
           <div className="mt-3 flex flex-col gap-1 text-[13px] text-gray-600">
             <p>
