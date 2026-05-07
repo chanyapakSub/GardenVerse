@@ -1,7 +1,6 @@
 "use client";
 
-"use client";
-
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/organisms/Navbar";
 import Sidebar from "@/components/organisms/Sidebar";
 import { WeatherWidget } from "@/components/molecules/WeatherWidget";
@@ -9,6 +8,16 @@ import Image from "next/image";
 import { Search, Plus, MoreVertical, Droplet, ChevronDown, ChevronLeft, ChevronRight, Download, MoveRight, Save, Lightbulb, Leaf, Activity, AlertTriangle } from "lucide-react";
 
 export default function PlantsPage() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <div className="min-h-screen bg-[#f8f9fa]" />;
+  }
+
   const plants = [
     {
       id: 1,

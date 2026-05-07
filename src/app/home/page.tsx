@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/organisms/Navbar";
 import Sidebar from "@/components/organisms/Sidebar";
 import PlantDetailPanel from "@/components/organisms/PlantDetailPanel";
@@ -6,6 +9,15 @@ import Garden3D from "@/components/organisms/Garden3D";
 import AddModal from "@/components/organisms/AddModal";
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-[#f3f4f6]" />;
+  }
   return (
     <div className="min-h-screen flex flex-col bg-[#f3f4f6]">
       <Navbar />

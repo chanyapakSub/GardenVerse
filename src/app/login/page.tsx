@@ -14,6 +14,10 @@ export default function LoginPage() {
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-[#f3f4f6]" />;
+  }
   
   // Form states
   const [identifier, setIdentifier] = useState(""); // For login (email or username)
