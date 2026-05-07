@@ -12,6 +12,7 @@ export interface PlantInfo {
   scientificName: string;
   emoji: string;
   image: string;
+  modelPath: string;
   description: string;
   sunlight: string;
   water: string;
@@ -26,6 +27,7 @@ export const PLANT_CATALOG: PlantInfo[] = [
     scientificName: 'Tulipa spp.',
     emoji: '🌷',
     image: '/images/flower/Tilip.png',
+    modelPath: '/3D/plants/tulip.glb',
     description: 'ทิวลิปเป็นไม้ดอกหัวฤดูหนาวที่นิยมปลูกในโรงเรือน ต้องการแสงแดดเพียงพอ อากาศเย็น และดินระบายน้ำดี',
     sunlight: '6-8 ชม./วัน',
     water: 'ปานกลาง',
@@ -38,6 +40,7 @@ export const PLANT_CATALOG: PlantInfo[] = [
     scientificName: 'Rosa spp.',
     emoji: '🌹',
     image: '/images/flower/Rose.png',
+    modelPath: '/3D/plants/red_rose.fbx',
     description: 'กุหลาบเป็นไม้ดอกที่ต้องการการดูแลพอประมาณ ชอบแดดจัดและดินที่อุดมสมบูรณ์',
     sunlight: '6-8 ชม./วัน',
     water: 'ปานกลาง',
@@ -50,6 +53,7 @@ export const PLANT_CATALOG: PlantInfo[] = [
     scientificName: 'Solanum lycopersicum',
     emoji: '🍅',
     image: '/images/vegetable/Tomato.png',
+    modelPath: '/3D/plants/tomato.glb',
     description: 'มะเขือเทศเป็นพืชผักที่นิยมปลูกในแปลงผักสวนครัว ต้องการแดดจัดและน้ำสม่ำเสมอ',
     sunlight: '6-8 ชม./วัน',
     water: 'มาก',
@@ -58,13 +62,40 @@ export const PLANT_CATALOG: PlantInfo[] = [
   },
   {
     id: 4,
-    name: 'ผักกาดหอม',
-    scientificName: 'Lactuca sativa',
-    emoji: '🥬',
-    image: '/images/vegetable/Lettuce.png',
-    description: 'ผักกาดหอมเติบโตเร็ว เหมาะปลูกในแปลงหรือกระถาง ชอบอากาศเย็น',
+    name: 'ทานตะวัน',
+    scientificName: 'Helianthus annuus',
+    emoji: '🌻',
+    image: '/images/flower/Tantawan.png',
+    modelPath: '/3D/plants/sunflower.glb',
+    description: 'ทานตะวันชอบแสงแดดจัดมาก เติบโตเร็ว และทนทานต่อสภาพอากาศ',
+    sunlight: '8-10 ชม./วัน',
+    water: 'ปานกลาง',
+    temperature: '20-35 °C',
+    soil: 'ทุกสภาพดิน',
+  },
+  {
+    id: 5,
+    name: 'มอนสเตอร่า',
+    scientificName: 'Monstera deliciosa',
+    emoji: '🌿',
+    image: '/images/flower/Lavender.png',
+    modelPath: '/3D/plants/monstera.glb',
+    description: 'ราชินีแห่งไม้ใบ มีความสวยงามแปลกตา ดูแลง่าย ชอบแสงรำไร',
+    sunlight: '3-5 ชม./วัน',
+    water: 'ปานกลาง',
+    temperature: '18-30 °C',
+    soil: 'ร่วนระบายน้ำดี',
+  },
+  {
+    id: 6,
+    name: 'ลิลลี่ม่วง',
+    scientificName: 'Lilium spp.',
+    emoji: '🪻',
+    image: '/images/flower/Haidenyia.png',
+    modelPath: '/3D/plants/purple_lilies.glb',
+    description: 'ดอกลิลลี่สีม่วง สัญลักษณ์ของความสง่างามและความมั่งคั่ง',
     sunlight: '4-6 ชม./วัน',
-    water: 'ปานกลาง-มาก',
+    water: 'ปานกลาง',
     temperature: '15-22 °C',
     soil: 'ร่วนซุย',
   },

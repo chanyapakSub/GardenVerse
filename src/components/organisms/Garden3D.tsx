@@ -9,6 +9,15 @@ import { PlantTrayModel } from "@/components/molecules/PlantTrayModel";
 import { useStore, gridToPosition, PLANT_CATALOG } from "@/store/useStore";
 import { Leaf, Box, Plus, Sprout, X } from "lucide-react";
 import { GridFloor } from "@/components/atoms/GridFloor";
+import { Plant3DModel } from "@/components/molecules/Plant3DModel";
+
+// Preload plant models
+PLANT_CATALOG.forEach(p => {
+  if (p.modelPath) {
+    // We can't use useGLTF.preload here because it's not a hook, 
+    // but we can rely on the component preloading or just let them load lazily in Suspense.
+  }
+});
 
 // ===== ตัวเรนเดอร์ items ทั้งหมด =====
 function ItemsRenderer() {
@@ -17,6 +26,7 @@ function ItemsRenderer() {
   const placementMode = useStore((s) => s.placementMode);
   const selectItem = useStore((s) => s.selectItem);
   const setEditMode = useStore((s) => s.setEditMode);
+  const isAddModalOpen = useStore((s) => s.isAddModalOpen);
 
   // คลิกซ้ายที่ item → เลือกเพื่อดูข้อมูล
   const handleItemClick = (e: ThreeEvent<MouseEvent>, id: string) => {
@@ -57,37 +67,58 @@ function ItemsRenderer() {
               </mesh>
             )}
 
-            {/* Model */}
-            {item.type === "pot" ? <PlantPotModel scale={0.5} /> : <PlantTrayModel scale={0.5} />}
+            {/* Model - raised slightly to not be buried */}
+            <group position={[0, 0.05, 0]}>
+              {item.type === "pot" ? <PlantPotModel scale={0.6} /> : <PlantTrayModel scale={0.6} />}
+            </group>
 
-            {/* แสดงพืชที่ปลูก (ถ้ามี) - simulate ด้วย sphere เขียวๆ */}
+            {/* แสดงพืชที่ปลูก (ถ้ามี) */}
             {plant && (
-              <group position={[0, item.type === "pot" ? 0.4 : 0.3, 0]}>
-                <mesh castShadow>
-                  <sphereGeometry args={[0.25, 16, 16]} />
-                  <meshStandardMaterial color="#4ade80" roughness={0.5} />
-                </mesh>
-              </group>
+              <>
+                {item.type === "pot" ? (
+                  // กระถาง: ปลูก 1 ต้น ตรงกลาง (Soil surface is at 0.218)
+                  <group position={[0, 0.218, 0]}>
+                    <Plant3DModel 
+                      modelPath={plant.modelPath} 
+                      scale={1.0} 
+                    />
+                  </group>
+                ) : (
+                  // แปลง: ปลูก 4 ต้น (2x2 grid) (Soil surface is at 0.17)
+                  <group position={[0, 0.17, 0]}>
+                    <Plant3DModel modelPath={plant.modelPath} scale={1.0} position={[-0.4, 0, -0.4]} />
+                    <Plant3DModel modelPath={plant.modelPath} scale={1.0} position={[0.4, 0, -0.4]} />
+                    <Plant3DModel modelPath={plant.modelPath} scale={1.0} position={[-0.4, 0, 0.4]} />
+                    <Plant3DModel modelPath={plant.modelPath} scale={1.0} position={[0.4, 0, 0.4]} />
+                  </group>
+                )}
+              </>
             )}
 
-            {/* ป้ายชื่อ */}
-            <Html
-              position={[0, item.type === "pot" ? 0.9 : 0.7, 0]}
-              center
-              style={{ pointerEvents: "none" }}
-              distanceFactor={10}
-            >
-              <div
-                className={`px-2 py-1 rounded-lg shadow-md text-xs font-bold whitespace-nowrap transition-all ${isSelected
-                  ? "bg-yellow-400 text-yellow-900 scale-110"
-                  : plant
-                    ? "bg-green-500 text-white"
-                    : "bg-white text-gray-700"
-                  }`}
+            {/* ป้ายชื่อ - ซ่อนถ้าเปิด Modal หรือ Placement mode */}
+            {!isAddModalOpen && !placementMode && (
+              <Html
+                position={[0, item.type === "pot" ? 0.6 : 0.4, 0]}
+                center
+                style={{ 
+                  pointerEvents: "none",
+                  transition: 'opacity 0.2s',
+                  opacity: isSelected ? 1 : 0.8
+                }}
+                distanceFactor={12}
               >
-                {plant ? `${plant.emoji} ${plant.name}` : item.type === "pot" ? "🪴 ว่าง" : "🟫 ว่าง"}
-              </div>
-            </Html>
+                <div
+                  className={`px-1 py-0 rounded-md shadow-sm text-[8px] font-bold whitespace-nowrap transition-all ${isSelected
+                    ? "bg-yellow-400/80 text-yellow-900 scale-105"
+                    : plant
+                      ? "bg-green-500/30 text-white backdrop-blur-[1px]"
+                      : "bg-white/30 text-gray-700 backdrop-blur-[1px]"
+                    }`}
+                >
+                  {plant ? `${plant.emoji} ${plant.name}` : item.type === "pot" ? "ว่าง" : "ว่าง"}
+                </div>
+              </Html>
+            )}
           </group>
         );
       })}
