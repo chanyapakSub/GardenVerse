@@ -11,6 +11,9 @@ const promptFont = Prompt({
 export const metadata: Metadata = {
   title: "My Garden - Grow with happiness",
   description: "GardenVerse management dashboard",
+  icons: {
+    icon: '/images/logo_gardenverse.png',
+  },
 };
 
 export default function RootLayout({
