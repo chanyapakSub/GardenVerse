@@ -3,14 +3,16 @@
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { zones } from "@/lib/mockData";
 import { useState } from "react";
+import { useStore } from "@/store/useStore";
 
 interface SidebarProps {
   onPlantClick?: (plantId: string) => void;
-  selectedPlantId?: string | null;
 }
 
-export default function Sidebar({ onPlantClick, selectedPlantId }: SidebarProps) {
+export default function Sidebar({ onPlantClick }: SidebarProps) {
   const [activeZone, setActiveZone] = useState<string[]>(zones.map(z => z.id));
+  const selectedPlotId = useStore(s => s.selectedPlotId);
+  const setSelectedPlotId = useStore(s => s.setSelectedPlotId);
 
   const toggleZone = (id: string) => {
     setActiveZone(prev => 
@@ -52,21 +54,24 @@ export default function Sidebar({ onPlantClick, selectedPlantId }: SidebarProps)
               {isOpen && (
                 <div className="flex flex-col gap-1 mt-1 mb-2">
                   {zone.plants.map((plant) => {
-                    const isSelected = selectedPlantId === plant.id;
+                    const isSelected = selectedPlotId === plant.id;
                     return (
                       <div 
                         key={plant.id}
-                        onClick={() => onPlantClick?.(plant.id)}
+                        onClick={() => {
+                          setSelectedPlotId(plant.id);
+                          onPlantClick?.(plant.id);
+                        }}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ml-4 cursor-pointer transition-colors ${
                           isSelected
                             ? "bg-green-50/80 text-green-700 font-medium"
-                            : plant.active && !selectedPlantId
+                            : plant.active && !selectedPlotId
                               ? "bg-green-50/80 text-green-700 font-medium" 
                               : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                         }`}
                       >
                         <div className={`w-2 h-2 rounded-full ${
-                          isSelected ? "bg-green-500" : plant.active && !selectedPlantId ? "bg-green-500" : plant.color.replace('text-', 'bg-')
+                          isSelected ? "bg-green-500" : plant.active && !selectedPlotId ? "bg-green-500" : plant.color.replace('text-', 'bg-')
                         }`} />
                         <span className="text-[14px]">{plant.name}</span>
                       </div>

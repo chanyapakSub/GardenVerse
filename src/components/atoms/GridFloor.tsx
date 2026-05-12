@@ -63,6 +63,7 @@ export function GridFloor() {
         if (gx < 0 || gx >= GRID_SIZE || gz < 0 || gz >= GRID_SIZE) return;
         if (isCellOccupied(gx, gz)) return;
 
+        const selectedPlotId = useStore.getState().selectedPlotId;
         const newId = `item_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
         addItem({
             id: newId,
@@ -70,6 +71,7 @@ export function GridFloor() {
             plantId: null,
             gridX: gx,
             gridZ: gz,
+            plotId: selectedPlotId || 'p1',
         });
         setPlacementMode(null);
         setHoveredCell(null);

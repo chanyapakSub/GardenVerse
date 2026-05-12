@@ -40,7 +40,7 @@ export const PLANT_CATALOG: PlantInfo[] = [
     scientificName: 'Rosa spp.',
     emoji: '🌹',
     image: '/images/flower/Rose.png',
-    modelPath: '/3D/plants/red_rose.fbx',
+    modelPath: '/3D/plants/rose.glb',
     description: 'กุหลาบเป็นไม้ดอกที่ต้องการการดูแลพอประมาณ ชอบแดดจัดและดินที่อุดมสมบูรณ์',
     sunlight: '6-8 ชม./วัน',
     water: 'ปานกลาง',
@@ -101,15 +101,33 @@ export const PLANT_CATALOG: PlantInfo[] = [
   },
 ];
 
+// ===== ข้อมูลของตกแต่ง (Decoration) =====
+export const DECO_CATALOG: PlantInfo[] = [
+  {
+    id: 101, // ใช้ id หลักร้อยสำหรับของตกแต่ง
+    name: 'แจกันตกแต่ง',
+    scientificName: 'Garden Vase',
+    emoji: '🏺',
+    image: '/images/deco/table.png', // สมมติว่ามีรูป
+    modelPath: '/3D/vase.glb',
+    description: 'แจกันไม้สำหรับนั่งพักผ่อนในสวน ทนแดดทนฝน',
+    sunlight: '-',
+    water: '-',
+    temperature: '-',
+    soil: '-',
+  },
+];
+
 // ===== โครงสร้างข้อมูล Item =====
 export interface PlantItem {
   id: string;
-  type: 'pot' | 'bed';
+  type: 'pot' | 'bed' | 'deco'; // เพิ่ม deco
   plantId: number | null;
   // ใช้ grid coordinate (col, row) แทน position 3D ตรงๆ
   // เพื่อให้ snap to grid และตรวจสอบช่องว่างได้ง่าย
   gridX: number;
   gridZ: number;
+  plotId: string;
   name?: string;
   zone?: string;
   health?: number;
@@ -152,14 +170,24 @@ interface AppState {
   setHoveredCell: (cell: [number, number] | null) => void;
 
   // Placement mode
-  placementMode: 'pot' | 'bed' | null;
-  setPlacementMode: (mode: 'pot' | 'bed' | null) => void;
+  placementMode: 'pot' | 'bed' | 'deco' | null; // เพิ่ม deco
+  setPlacementMode: (mode: 'pot' | 'bed' | 'deco' | null) => void;
 
   // AddModal
   isAddModalOpen: boolean;
   pendingItemId: string | null; // item ที่เพิ่งวางและรอเลือกพืช
   openAddModal: (itemId?: string) => void;
   closeAddModal: () => void;
+
+  // Interactive Care Tools
+  activeCareTool: 'water' | 'fertilize' | null;
+  setActiveCareTool: (tool: 'water' | 'fertilize' | null) => void;
+  animatingItemId: string | null;
+  setAnimatingItemId: (id: string | null) => void;
+
+  // Plot Selection
+  selectedPlotId: string | null;
+  setSelectedPlotId: (id: string | null) => void;
 
   // Helper: ตรวจสอบว่า cell นี้ว่างมั้ย
   isCellOccupied: (gridX: number, gridZ: number) => boolean;
@@ -199,8 +227,26 @@ export const useStore = create<AppState>((set, get) => ({
   openAddModal: (itemId) => set({ isAddModalOpen: true, pendingItemId: itemId || null }),
   closeAddModal: () => set({ isAddModalOpen: false, pendingItemId: null }),
 
+  // ===== Interactive Care Tools =====
+  activeCareTool: null,
+  setActiveCareTool: (tool) => set({ activeCareTool: tool }),
+  animatingItemId: null,
+  setAnimatingItemId: (id) => set({ animatingItemId: id }),
+
+  // ===== Plot Selection =====
+  selectedPlotId: 'p1', // Default to Tulip plot
+  setSelectedPlotId: (id) => set({
+    selectedPlotId: id,
+    selectedItemId: null,
+    isEditMode: false,
+    placementMode: null
+  }),
+
   // ===== Helpers =====
   isCellOccupied: (gridX, gridZ) => {
-    return get().items.some((it) => it.gridX === gridX && it.gridZ === gridZ);
+    const { items, selectedPlotId } = get();
+    return items
+      .filter(it => it.plotId === selectedPlotId)
+      .some((it) => it.gridX === gridX && it.gridZ === gridZ);
   },
 }));

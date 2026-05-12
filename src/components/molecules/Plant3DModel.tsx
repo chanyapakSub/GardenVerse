@@ -11,11 +11,11 @@ interface Plant3DModelProps {
 
 export function Plant3DModel({ modelPath, scale = 1, ...props }: Plant3DModelProps) {
   const isFbx = modelPath.toLowerCase().endsWith(".fbx");
-  
+
   // Use the appropriate hook based on file extension
   // Note: We use dummy paths to avoid hook order errors when switching models
-  const gltf = useGLTF(!isFbx ? modelPath : "/3D/plants/tomato.glb"); 
-  const fbx = useFBX(isFbx ? modelPath : "/3D/plants/red_rose.fbx"); 
+  const gltf = useGLTF(!isFbx ? modelPath : "/3D/plants/tomato.glb");
+  const fbx = useFBX(isFbx ? modelPath : "/3D/plants/red_rose.fbx");
 
   const scene = isFbx ? fbx : gltf.scene;
 
@@ -51,29 +51,33 @@ export function Plant3DModel({ modelPath, scale = 1, ...props }: Plant3DModelPro
     finalScale *= 0.12;
     yOffset = 1;
   }
-  if (modelPath.includes("red_rose")) {
-    // FBX scale for this specific rose model might need to be very small
-    finalScale *= 0.012; 
-    yOffset = -0.1;
+  if (modelPath.includes("rose")) {
+    // Adjusted scale for the new rose.glb model
+    finalScale *= 1.5;
+    yOffset = 0;
   }
   if (modelPath.includes("sunflower")) {
     finalScale *= 0.006;
-    yOffset = -0.1;
+    yOffset = 0.1;
+  }
+  if (modelPath.includes("vase")) {
+    finalScale *= 1.5; // โต๊ะอาจจะต้องการการปรับขนาด
+    yOffset = 0;
   }
   if (modelPath.includes("tomato")) {
     finalScale *= 0.008;
     yOffset = 0.1;
   }
 
-  const finalPosition: [number, number, number] = props.position 
-    ? [props.position[0], props.position[1] + yOffset, props.position[2]] 
+  const finalPosition: [number, number, number] = props.position
+    ? [props.position[0], props.position[1] + yOffset, props.position[2]]
     : [0, yOffset, 0];
 
   return (
-    <primitive 
+    <primitive
       {...props}
-      object={cloned} 
-      scale={finalScale} 
+      object={cloned}
+      scale={finalScale}
       position={finalPosition}
     />
   );
@@ -83,6 +87,7 @@ export function Plant3DModel({ modelPath, scale = 1, ...props }: Plant3DModelPro
 useGLTF.preload("/3D/plants/monstera.glb");
 useGLTF.preload("/3D/plants/tulip.glb");
 useGLTF.preload("/3D/plants/purple_lilies.glb");
-useFBX.preload("/3D/plants/red_rose.fbx");
+useGLTF.preload("/3D/plants/rose.glb");
 useGLTF.preload("/3D/plants/sunflower.glb");
 useGLTF.preload("/3D/plants/tomato.glb");
+useGLTF.preload("/3D/vase.glb");

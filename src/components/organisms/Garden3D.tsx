@@ -6,10 +6,11 @@ import { Suspense } from "react";
 import { GreenhouseModel } from "@/components/molecules/GreenhouseModel";
 import { PlantPotModel } from "@/components/molecules/PlantPotModel";
 import { PlantTrayModel } from "@/components/molecules/PlantTrayModel";
-import { useStore, gridToPosition, PLANT_CATALOG } from "@/store/useStore";
-import { Leaf, Box, Plus, Sprout, X } from "lucide-react";
+import { useStore, gridToPosition, PLANT_CATALOG, DECO_CATALOG } from "@/store/useStore";
+import { Leaf, Box, Plus, Sprout, X, Sofa } from "lucide-react";
 import { GridFloor } from "@/components/atoms/GridFloor";
 import { Plant3DModel } from "@/components/molecules/Plant3DModel";
+import { InteractiveCareTool } from "@/components/molecules/InteractiveCareTool";
 
 // Preload plant models
 PLANT_CATALOG.forEach(p => {
@@ -21,12 +22,15 @@ PLANT_CATALOG.forEach(p => {
 
 // ===== ตัวเรนเดอร์ items ทั้งหมด =====
 function ItemsRenderer() {
-  const items = useStore((s) => s.items);
+  const selectedPlotId = useStore((s) => s.selectedPlotId);
+  const items = useStore((s) => s.items).filter(it => it.plotId === selectedPlotId);
   const selectedItemId = useStore((s) => s.selectedItemId);
   const placementMode = useStore((s) => s.placementMode);
   const selectItem = useStore((s) => s.selectItem);
   const setEditMode = useStore((s) => s.setEditMode);
   const isAddModalOpen = useStore((s) => s.isAddModalOpen);
+  const activeCareTool = useStore((s) => s.activeCareTool);
+  const setAnimatingItemId = useStore((s) => s.setAnimatingItemId);
 
   // คลิกซ้ายที่ item → เลือกเพื่อดูข้อมูล
   const handleItemClick = (e: ThreeEvent<MouseEvent>, id: string) => {
@@ -50,7 +54,9 @@ function ItemsRenderer() {
       {items.map((item) => {
         const pos = gridToPosition(item.gridX, item.gridZ);
         const isSelected = selectedItemId === item.id;
-        const plant = item.plantId ? PLANT_CATALOG.find((p) => p.id === item.plantId) : null;
+        const plant = item.plantId
+          ? (item.type === 'deco' ? DECO_CATALOG : PLANT_CATALOG).find((p) => p.id === item.plantId)
+          : null;
 
         return (
           <group
@@ -69,18 +75,27 @@ function ItemsRenderer() {
 
             {/* Model - raised slightly to not be buried */}
             <group position={[0, 0.05, 0]}>
-              {item.type === "pot" ? <PlantPotModel scale={0.6} /> : <PlantTrayModel scale={0.6} />}
+              {item.type === "pot" ? (
+                <PlantPotModel scale={0.6} />
+              ) : item.type === "bed" ? (
+                <PlantTrayModel scale={0.6} />
+              ) : null /* deco doesn't have a container */}
             </group>
 
-            {/* แสดงพืชที่ปลูก (ถ้ามี) */}
+            {/* แสดงพืชหรือของตกแต่ง */}
             {plant && (
               <>
-                {item.type === "pot" ? (
-                  // กระถาง: ปลูก 1 ต้น ตรงกลาง (Soil surface is at 0.218)
+                {item.type === "deco" ? (
+                  // ของตกแต่ง: แสดงโมเดลตรงๆ
+                  <group position={[0, 0, 0]}>
+                    <Plant3DModel modelPath={plant.modelPath} scale={1.0} />
+                  </group>
+                ) : item.type === "pot" ? (
+                  // กระถาง: ปลูก 1 ต้น ตรงกลาง
                   <group position={[0, 0.218, 0]}>
-                    <Plant3DModel 
-                      modelPath={plant.modelPath} 
-                      scale={1.0} 
+                    <Plant3DModel
+                      modelPath={plant.modelPath}
+                      scale={1.0}
                     />
                   </group>
                 ) : (
@@ -96,26 +111,31 @@ function ItemsRenderer() {
             )}
 
             {/* ป้ายชื่อ - ซ่อนถ้าเปิด Modal หรือ Placement mode */}
-            {!isAddModalOpen && !placementMode && (
+            {!isAddModalOpen && !placementMode && plant && (
               <Html
                 position={[0, item.type === "pot" ? 0.6 : 0.4, 0]}
                 center
-                style={{ 
-                  pointerEvents: "none",
+                style={{
+                  pointerEvents: "auto", // เปลี่ยนให้คลิกได้
                   transition: 'opacity 0.2s',
                   opacity: isSelected ? 1 : 0.8
                 }}
                 distanceFactor={12}
               >
-                <div
-                  className={`px-1 py-0 rounded-md shadow-sm text-[8px] font-bold whitespace-nowrap transition-all ${isSelected
-                    ? "bg-yellow-400/80 text-yellow-900 scale-105"
-                    : plant
-                      ? "bg-green-500/30 text-white backdrop-blur-[1px]"
-                      : "bg-white/30 text-gray-700 backdrop-blur-[1px]"
-                    }`}
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedItemId(isSelected ? null : item.id);
+                  }}
+                  className={`
+                    px-2 py-0.5 rounded-md shadow-sm text-[10px] font-bold whitespace-nowrap transition-all cursor-pointer border
+                    ${isSelected 
+                      ? "bg-amber-400/90 border-amber-500 text-amber-950 scale-105" 
+                      : "bg-black/20 backdrop-blur-[2px] border-white/30 text-white hover:bg-black/30"
+                    }
+                  `}
                 >
-                  {plant ? `${plant.emoji} ${plant.name}` : item.type === "pot" ? "ว่าง" : "ว่าง"}
+                  {plant.emoji} {plant.name}
                 </div>
               </Html>
             )}
@@ -130,7 +150,8 @@ function ItemsRenderer() {
 export default function Garden3D() {
   const placementMode = useStore((s) => s.placementMode);
   const setPlacementMode = useStore((s) => s.setPlacementMode);
-  const items = useStore((s) => s.items);
+  const selectedPlotId = useStore((s) => s.selectedPlotId);
+  const items = useStore((s) => s.items).filter(it => it.plotId === selectedPlotId);
 
   return (
     <div className="w-full h-full relative cursor-move rounded-2xl overflow-hidden bg-sky-100">
@@ -174,6 +195,9 @@ export default function Garden3D() {
 
             {/* Items ที่วางไว้ */}
             <ItemsRenderer />
+
+            {/* เครื่องมือดูแลพืช (ลอยตามเมาส์) */}
+            <InteractiveCareTool />
           </group>
 
           <ContactShadows
@@ -236,14 +260,14 @@ export default function Garden3D() {
       )}
 
       {/* Toolbar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-xl flex items-center gap-4 z-10 border border-gray-200">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-xl flex items-center gap-4 z-15 border border-gray-200">
         <div className="text-sm font-bold text-gray-700 border-r border-gray-200 pr-4 mr-2">
           เพิ่มไอเทม
         </div>
 
         <button
           onClick={() => setPlacementMode(placementMode === "bed" ? null : "bed")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${placementMode === "bed"
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all whitespace-nowrap ${placementMode === "bed"
             ? "bg-green-500 text-white shadow-md"
             : "bg-gray-100 hover:bg-gray-200 text-gray-700"
             }`}
@@ -254,13 +278,24 @@ export default function Garden3D() {
 
         <button
           onClick={() => setPlacementMode(placementMode === "pot" ? null : "pot")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${placementMode === "pot"
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all whitespace-nowrap ${placementMode === "pot"
             ? "bg-green-500 text-white shadow-md"
             : "bg-gray-100 hover:bg-gray-200 text-gray-700"
             }`}
         >
           <Leaf className="w-5 h-5" />
           <span className="font-semibold text-sm">วางกระถาง</span>
+        </button>
+
+        <button
+          onClick={() => setPlacementMode(placementMode === "deco" ? null : "deco")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all whitespace-nowrap ${placementMode === "deco"
+            ? "bg-amber-500 text-white shadow-md"
+            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+            }`}
+        >
+          <Sofa className="w-5 h-5" />
+          <span className="font-semibold text-sm">ตกแต่งสวน</span>
         </button>
 
         {placementMode && (

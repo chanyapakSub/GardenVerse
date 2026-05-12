@@ -2,7 +2,7 @@
 
 import { X, Sprout, Check } from "lucide-react";
 import { useState } from "react";
-import { useStore, PLANT_CATALOG } from "@/store/useStore";
+import { useStore, PLANT_CATALOG, DECO_CATALOG } from "@/store/useStore";
 
 export default function AddModal() {
   const isOpen = useStore((s) => s.isAddModalOpen);
@@ -21,7 +21,8 @@ export default function AddModal() {
 
   const handleConfirm = () => {
     if (!pendingItemId || !selectedPlantId) return;
-    const plant = PLANT_CATALOG.find((p) => p.id === selectedPlantId);
+    const catalog = pendingItem?.type === 'deco' ? DECO_CATALOG : PLANT_CATALOG;
+    const plant = catalog.find((p) => p.id === selectedPlantId);
     updateItem(pendingItemId, {
       plantId: selectedPlantId,
       name: plant?.name,
@@ -52,7 +53,9 @@ export default function AddModal() {
               <Sprout className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800">เลือกพืชมาปลูก</h2>
+              <h2 className="text-lg font-bold text-gray-800">
+                {pendingItem?.type === 'deco' ? 'เลือกของตกแต่ง' : 'เลือกพืชมาปลูก'}
+              </h2>
               {pendingItem && (
                 <p className="text-xs text-gray-500">
                   {pendingItem.type === "pot" ? "กระถาง" : "แปลง"} ที่ตำแหน่ง ({pendingItem.gridX},{" "}
@@ -69,18 +72,18 @@ export default function AddModal() {
           </button>
         </div>
 
-        {/* Plant Catalog */}
+        {/* Catalog */}
         <div className="flex-1 overflow-y-auto p-5">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {PLANT_CATALOG.map((plant) => {
+            {(pendingItem?.type === 'deco' ? DECO_CATALOG : PLANT_CATALOG).map((plant) => {
               const isSelected = selectedPlantId === plant.id;
               return (
                 <button
                   key={plant.id}
                   onClick={() => setSelectedPlantId(plant.id)}
                   className={`relative p-4 rounded-2xl border-2 transition-all text-left ${isSelected
-                      ? "border-green-500 bg-green-50 shadow-md scale-105"
-                      : "border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50"
+                    ? "border-green-500 bg-green-50 shadow-md scale-105"
+                    : "border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50"
                     }`}
                 >
                   {isSelected && (
@@ -119,7 +122,7 @@ export default function AddModal() {
             className="flex-1 py-3 rounded-xl font-bold text-white bg-[#3b8045] hover:bg-[#2d6635] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Sprout className="w-5 h-5" />
-            ปลูกพืช
+            {pendingItem?.type === 'deco' ? 'วางของตกแต่ง' : 'ปลูกพืช'}
           </button>
         </div>
       </div>

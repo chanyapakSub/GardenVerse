@@ -30,6 +30,10 @@ export default function PlantDetailPanel() {
   const removeItem = useStore((s) => s.removeItem);
   const openAddModal = useStore((s) => s.openAddModal);
   const selectItem = useStore((s) => s.selectItem);
+  const setActiveCareTool = useStore((s) => s.setActiveCareTool);
+  const setAnimatingItemId = useStore((s) => s.setAnimatingItemId);
+
+  const [showCareMenu, setShowCareMenu] = useState(false);
 
   const selectedItem = items.find((it) => it.id === selectedItemId);
   const plant = selectedItem?.plantId
@@ -148,28 +152,28 @@ export default function PlantDetailPanel() {
           <p className="text-sm text-gray-500 italic">{plant.scientificName}</p>
 
           {(() => {
-                const h = selectedItem.health || 85;
-                if (h >= 80) return (
-                  <div className="mt-3 flex items-center gap-2 bg-green-50 w-fit px-3 py-1 rounded-full border border-green-100">
-                    <span className="text-sm font-semibold text-green-700">🌱 สุขภาพดีมาก</span>
-                  </div>
-                );
-                if (h >= 60) return (
-                  <div className="mt-3 flex items-center gap-2 bg-blue-50 w-fit px-3 py-1 rounded-full border border-blue-100">
-                    <span className="text-sm font-semibold text-blue-700">🌿 สุขภาพดี</span>
-                  </div>
-                );
-                if (h >= 40) return (
-                  <div className="mt-3 flex items-center gap-2 bg-yellow-50 w-fit px-3 py-1 rounded-full border border-yellow-100">
-                    <span className="text-sm font-semibold text-yellow-700">🍃 สุขภาพปานกลาง</span>
-                  </div>
-                );
-                return (
-                  <div className="mt-3 flex items-center gap-2 bg-red-50 w-fit px-3 py-1 rounded-full border border-red-100">
-                    <span className="text-sm font-semibold text-red-700">🍂 ต้องดูแลเพิ่ม</span>
-                  </div>
-                );
-              })()}
+            const h = selectedItem.health || 85;
+            if (h >= 80) return (
+              <div className="mt-3 flex items-center gap-2 bg-green-50 w-fit px-3 py-1 rounded-full border border-green-100">
+                <span className="text-sm font-semibold text-green-700">🌱 สุขภาพดีมาก</span>
+              </div>
+            );
+            if (h >= 60) return (
+              <div className="mt-3 flex items-center gap-2 bg-blue-50 w-fit px-3 py-1 rounded-full border border-blue-100">
+                <span className="text-sm font-semibold text-blue-700">🌿 สุขภาพดี</span>
+              </div>
+            );
+            if (h >= 40) return (
+              <div className="mt-3 flex items-center gap-2 bg-yellow-50 w-fit px-3 py-1 rounded-full border border-yellow-100">
+                <span className="text-sm font-semibold text-yellow-700">🍃 สุขภาพปานกลาง</span>
+              </div>
+            );
+            return (
+              <div className="mt-3 flex items-center gap-2 bg-red-50 w-fit px-3 py-1 rounded-full border border-red-100">
+                <span className="text-sm font-semibold text-red-700">🍂 ต้องดูแลเพิ่ม</span>
+              </div>
+            );
+          })()}
 
           <div className="mt-3 flex flex-col gap-1 text-[13px] text-gray-600">
             <p>
@@ -298,24 +302,54 @@ export default function PlantDetailPanel() {
           </>
         ) : (
           <>
-            <button className="w-full bg-[#3b8045] hover:bg-[#2d6635] text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md shadow-green-900/10 transition-colors">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+            {showCareMenu ? (
+              <div className="flex gap-2 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <button
+                  onClick={() => {
+                    setActiveCareTool('water');
+                    setAnimatingItemId(selectedItem.id);
+                    setShowCareMenu(false);
+                  }}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
+                >
+                  <Droplets className="w-5 h-5" />
+                  รดน้ำ
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveCareTool('fertilize');
+                    setAnimatingItemId(selectedItem.id);
+                    setShowCareMenu(false);
+                  }}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
+                >
+                  <Sprout className="w-5 h-5" />
+                  ใส่ปุ๋ย
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setShowCareMenu(true)}
+                className="w-full bg-[#3b8045] hover:bg-[#2d6635] text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md shadow-green-900/10 transition-all active:scale-[0.98]"
               >
-                <path d="M12 22V12" />
-                <path d="M12 12C12 12 17 8 17 4" />
-                <path d="M17 4C17 4 20 6 20 10 20 12.5 17 14 17 14" />
-                <path d="M12 12C12 12 7 8 7 4" />
-                <path d="M7 4C7 4 4 6 4 10 4 12.5 7 14 7 14" />
-              </svg>
-              ดูแลตอนนี้
-              <ChevronDown className="w-4 h-4" />
-            </button>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M12 22V12" />
+                  <path d="M12 12C12 12 17 8 17 4" />
+                  <path d="M17 4C17 4 20 6 20 10 20 12.5 17 14 17 14" />
+                  <path d="M12 12C12 12 7 8 7 4" />
+                  <path d="M7 4C7 4 4 6 4 10 4 12.5 7 14 7 14" />
+                </svg>
+                ดูแลตอนนี้
+                <ChevronDown className={`w-4 h-4 transition-transform ${showCareMenu ? 'rotate-180' : ''}`} />
+              </button>
+            )}
             <Link
               href="/history"
               className="w-full border border-gray-200 hover:bg-gray-50 text-gray-700 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-colors text-sm"
