@@ -73,7 +73,7 @@ export default function Navbar() {
         {/* Middle section: Links */}
         <div className="flex items-center gap-8 text-[15px] font-medium h-full">
           <Link href="/home" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/home" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>สวนของฉัน</Link>
-          <Link href="#" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/plants" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>พืชของฉัน</Link>
+          <Link href="/plants" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/plants" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>พืชของฉัน</Link>
           <Link href="/history" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/history" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>ประวัติการดูแล</Link>
           <Link href="/shop" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/shop" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>ร้านค้า</Link>
         </div>
@@ -109,20 +109,20 @@ export default function Navbar() {
                 className="object-cover"
               />
             </div>
-            
+
             {/* Dropdown Menu */}
             <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all w-52 overflow-hidden z-50">
               <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
                 <span className="text-[11px] text-gray-500 block uppercase tracking-wider font-semibold mb-0.5">บัญชีผู้ใช้</span>
                 <span className="text-[14px] font-bold text-gray-800 truncate block">{username}</span>
               </div>
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }}
                 className="flex items-center gap-2 px-4 py-3 text-[14px] font-medium text-gray-700 hover:bg-gray-50 border-b border-gray-100 w-full transition-colors"
               >
                 <Settings className="w-[18px] h-[18px]" /> ตั้งค่าโปรไฟล์และธีม
               </button>
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); handleLogout(); }}
                 className="flex items-center gap-2 px-4 py-3 text-[14px] font-medium text-red-600 hover:bg-red-50 w-full transition-colors"
               >
@@ -133,9 +133,9 @@ export default function Navbar() {
         </div>
       </nav>
 
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
         currentUsername={username}
         currentImage={profileImage}
         onSave={handleSaveSettings}
