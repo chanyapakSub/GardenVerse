@@ -67,20 +67,22 @@ export function WateringAnimation() {
       
       // อัปเดตน้ำไหล
       if (particlesRef.current) {
-        const attr = particlesRef.current.geometry.attributes.position;
-        for (let i = 0; i < particlesCount; i++) {
-          const idx = i * 3;
-          // ถ้าน้ำตกถึงพื้นแล้ว ให้ย้อนกลับไปที่ปากฝักบัว
-          if (attr.array[idx + 1] < -1.5) {
-            attr.array[idx] = (Math.random() - 0.5) * 0.1;
-            attr.array[idx + 1] = 0;
-            attr.array[idx + 2] = 0;
-          } else {
-            attr.array[idx + 1] -= 0.1; // ตกด้วยแรงโน้มถ่วง
-            attr.array[idx] += (Math.random() - 0.5) * 0.02; // กระจายตัวนิดหน่อย
+        const attr = particlesRef.current.geometry.attributes.position as THREE.BufferAttribute;
+        if (attr) {
+          for (let i = 0; i < particlesCount; i++) {
+            const idx = i * 3;
+            // ถ้าน้ำตกถึงพื้นแล้ว ให้ย้อนกลับไปที่ปากฝักบัว
+            if (attr.array[idx + 1] < -1.5) {
+              attr.array[idx] = (Math.random() - 0.5) * 0.1;
+              attr.array[idx + 1] = 0;
+              attr.array[idx + 2] = 0;
+            } else {
+              attr.array[idx + 1] -= 0.1; // ตกด้วยแรงโน้มถ่วง
+              attr.array[idx] += (Math.random() - 0.5) * 0.02; // กระจายตัวนิดหน่อย
+            }
           }
+          attr.needsUpdate = true;
         }
-        attr.needsUpdate = true;
       }
 
       setProgress(prev => prev + delta);
@@ -132,7 +134,7 @@ export function WateringAnimation() {
               itemSize={3}
             />
           </bufferGeometry>
-          <pointsMaterial color="#60a5fa" size={0.05} transparent opacity={0.6} />
+          <pointsMaterial color="#60a5fa" size={0.1} transparent opacity={0.8} sizeAttenuation />
         </points>
       )}
     </group>

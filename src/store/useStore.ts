@@ -189,6 +189,28 @@ interface AppState {
   selectedPlotId: string | null;
   setSelectedPlotId: (id: string | null) => void;
 
+  // Animation States (Specific for separate components)
+  isWateringItemId: string | null;
+  setIsWateringItemId: (id: string | null) => void;
+  isFertilizingItemId: string | null;
+  setIsFertilizingItemId: (id: string | null) => void;
+
+  // Detection History
+  detectionHistory: Array<{
+    id: string;
+    prediction: string;
+    confidence: number;
+    advice: string;
+    timestamp: string;
+    imageUrl: string;
+  }>;
+  addDetectionHistory: (entry: {
+    prediction: string;
+    confidence: number;
+    advice: string;
+    imageUrl: string;
+  }) => void;
+
   // Helper: ตรวจสอบว่า cell นี้ว่างมั้ย
   isCellOccupied: (gridX: number, gridZ: number) => boolean;
 }
@@ -241,6 +263,25 @@ export const useStore = create<AppState>((set, get) => ({
     isEditMode: false,
     placementMode: null
   }),
+
+  // ===== Animation States =====
+  isWateringItemId: null,
+  setIsWateringItemId: (id) => set({ isWateringItemId: id }),
+  isFertilizingItemId: null,
+  setIsFertilizingItemId: (id) => set({ isFertilizingItemId: id }),
+
+  // ===== Detection History =====
+  detectionHistory: [],
+  addDetectionHistory: (entry) => set((state) => ({
+    detectionHistory: [
+      {
+        ...entry,
+        id: Math.random().toString(36).substring(7),
+        timestamp: new Date().toLocaleString('th-TH'),
+      },
+      ...state.detectionHistory,
+    ],
+  })),
 
   // ===== Helpers =====
   isCellOccupied: (gridX, gridZ) => {

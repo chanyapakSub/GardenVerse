@@ -75,6 +75,7 @@ export default function Navbar() {
           <Link href="/home" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/home" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>สวนของฉัน</Link>
           <Link href="/plants" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/plants" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>พืชของฉัน</Link>
           <Link href="/history" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/history" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>ประวัติการดูแล</Link>
+          <Link href="/disease-detect" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/disease-detect" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>AI ตรวจโรคพืช</Link>
           <Link href="/shop" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/shop" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>ร้านค้า</Link>
         </div>
 

@@ -13,11 +13,11 @@ export function FertilizingAnimation() {
   const setIsFertilizingItemId = useStore((s) => s.setIsFertilizingItemId);
   const items = useStore((s) => s.items);
   const updateItem = useStore((s) => s.updateItem);
-  
+
   const targetItem = items.find((it) => it.id === isFertilizingItemId);
   const groupRef = useRef<THREE.Group>(null);
   const particlesRef = useRef<THREE.Points>(null);
-  
+
   const [phase, setPhase] = useState<"idle" | "moving" | "pouring" | "returning">("idle");
   const [progress, setProgress] = useState(0);
 
@@ -62,35 +62,37 @@ export function FertilizingAnimation() {
     } else if (phase === "pouring") {
       // เอียงถุงปุ๋ย
       groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -Math.PI / 3, 0.08);
-      
+
       // อัปเดตเม็ดปุ๋ย
       if (particlesRef.current) {
-        const attr = particlesRef.current.geometry.attributes.position;
-        for (let i = 0; i < particlesCount; i++) {
-          const idx = i * 3;
-          if (attr.array[idx + 1] < -2.0) {
-            attr.array[idx] = (Math.random() - 0.5) * 0.15;
-            attr.array[idx + 1] = 0;
-            attr.array[idx + 2] = 0;
-          } else {
-            attr.array[idx + 1] -= 0.08;
-            attr.array[idx] += (Math.random() - 0.5) * 0.03;
+        const attr = particlesRef.current.geometry.attributes.position as THREE.BufferAttribute;
+        if (attr) {
+          for (let i = 0; i < particlesCount; i++) {
+            const idx = i * 3;
+            if (attr.array[idx + 1] < -2.0) {
+              attr.array[idx] = (Math.random() - 0.5) * 0.15;
+              attr.array[idx + 1] = 0;
+              attr.array[idx + 2] = 0;
+            } else {
+              attr.array[idx + 1] -= 0.08;
+              attr.array[idx] += (Math.random() - 0.5) * 0.03;
+            }
           }
+          attr.needsUpdate = true;
         }
-        attr.needsUpdate = true;
       }
 
       setProgress(prev => prev + delta);
-      if (progress > 2.5) { 
+      if (progress > 2.5) {
         setPhase("returning");
       }
     } else if (phase === "returning") {
       groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, 0.08);
       groupRef.current.position.y += 0.1;
-      
+
       if (groupRef.current.position.y > 10) {
         if (isFertilizingItemId) {
-          updateItem(isFertilizingItemId, { 
+          updateItem(isFertilizingItemId, {
             health: 100,
             plantedAt: new Date().toLocaleDateString("th-TH") + " (เพิ่งใส่ปุ๋ย)"
           });
@@ -115,7 +117,7 @@ export function FertilizingAnimation() {
         <planeGeometry args={[0.3, 0.4]} />
         <meshStandardMaterial color="#b45309" />
       </mesh>
-      
+
       {/* เม็ดปุ๋ยหล่น */}
       {phase === "pouring" && (
         <points ref={particlesRef} position={[0, -0.4, 0]}>
@@ -127,7 +129,7 @@ export function FertilizingAnimation() {
               itemSize={3}
             />
           </bufferGeometry>
-          <pointsMaterial color="#92400e" size={0.06} />
+          <pointsMaterial color="#92400e" size={0.1} sizeAttenuation />
         </points>
       )}
     </group>

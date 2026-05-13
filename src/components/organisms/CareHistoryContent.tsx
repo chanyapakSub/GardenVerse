@@ -1,18 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Droplets, Leaf, ClipboardList, BookOpen, Activity, LayoutGrid } from "lucide-react";
+import { Droplets, Leaf, ClipboardList, BookOpen, Activity, LayoutGrid, Search } from "lucide-react";
 import SensorChart from "./SensorChart";
 import CareTable from "./CareTable";
 import CareSummary from "./CareSummary";
 import AlertPanel from "./AlertPanel";
 import { StatCard } from "@/components/molecules/StatCard";
+import { useStore } from "@/store/useStore";
+import Image from "next/image";
+import Link from "next/link";
 
 const TABS = [
   { id: "overview", label: "ภาพรวม", icon: LayoutGrid },
   { id: "sensor", label: "ข้อมูลเซนเซอร์", icon: Activity },
   { id: "water", label: "การให้น้ำ", icon: Droplets },
   { id: "fertilizer", label: "การให้ปุ๋ย", icon: Leaf },
+  { id: "ai", label: "AI วินิจฉัย", icon: Search },
   { id: "activity", label: "กิจกรรม", icon: ClipboardList },
   { id: "notes", label: "บันทึก", icon: BookOpen },
 ];
@@ -76,6 +80,7 @@ interface CareHistoryContentProps {
 export default function CareHistoryContent({ selectedPlantId }: CareHistoryContentProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const profile = (selectedPlantId && plantProfiles[selectedPlantId]) || defaultProfile;
+  const { detectionHistory } = useStore();
 
   const statCards = [
     {
@@ -157,14 +162,14 @@ export default function CareHistoryContent({ selectedPlantId }: CareHistoryConte
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-gray-200 overflow-x-auto no-scrollbar">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0 ${
                 activeTab === tab.id
                   ? "border-green-600 text-green-700 bg-green-50/50"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
@@ -209,7 +214,58 @@ export default function CareHistoryContent({ selectedPlantId }: CareHistoryConte
         </div>
       )}
 
-      {activeTab !== "overview" && (
+      {activeTab === "ai" && (
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <Search className="w-5 h-5 text-green-600" />
+              ประวัติการวินิจฉัยด้วย AI
+            </h3>
+            <span className="text-xs font-bold text-gray-400 bg-gray-100 px-4 py-1.5 rounded-full">
+              {detectionHistory.length} รายการ
+            </span>
+          </div>
+          
+          {detectionHistory.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {detectionHistory.map((item) => (
+                <div key={item.id} className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 flex gap-6 hover:border-green-200 transition-all hover:shadow-md group">
+                  <div className="relative w-40 h-28 rounded-2xl overflow-hidden shrink-0 border-4 border-gray-50 shadow-sm">
+                    <Image src={item.imageUrl} alt={item.prediction} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.timestamp}</span>
+                      <div className="flex items-center gap-1.5 text-[10px] font-black text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                        CONFIDENCE {item.confidence}%
+                      </div>
+                    </div>
+                    <h4 className="font-black text-gray-900 text-xl mb-1">{item.prediction}</h4>
+                    <p className="text-sm text-gray-500 line-clamp-1 font-medium">{item.advice}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-[40px] p-16 shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
+              <div className="bg-gray-50 p-8 rounded-full mb-6">
+                <Search className="w-12 h-12 text-gray-200" />
+              </div>
+              <p className="text-gray-400 font-bold text-lg mb-1">ยังไม่มีข้อมูลการวินิจฉัย</p>
+              <p className="text-gray-300 text-sm mb-6">ข้อมูลที่คุณตรวจสอบจะถูกบันทึกไว้ที่นี่เพื่อติดตามอาการ</p>
+              <Link 
+                href="/disease-detect" 
+                className="bg-green-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-green-700 transition-colors shadow-lg shadow-green-900/10"
+              >
+                เริ่มการตรวจโรคพืช
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab !== "overview" && activeTab !== "ai" && (
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex items-center justify-center h-64">
           <p className="text-gray-400 text-sm">กำลังพัฒนาเนื้อหาส่วนนี้...</p>
         </div>

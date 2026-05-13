@@ -4,6 +4,8 @@ import { ChevronUp, ChevronDown } from "lucide-react";
 import { zones } from "@/lib/mockData";
 import { useState } from "react";
 import { useStore } from "@/store/useStore";
+import Link from "next/link";
+import { Search } from "lucide-react";
 
 interface SidebarProps {
   onPlantClick?: (plantId: string) => void;
@@ -82,6 +84,22 @@ export default function Sidebar({ onPlantClick }: SidebarProps) {
             </div>
           );
         })}
+      </div>
+
+      {/* เมนูเสริมด้านล่าง */}
+      <div className="mt-auto pt-4 border-t border-gray-100 flex flex-col gap-2">
+        <Link 
+          href="/disease-detect"
+          className="flex items-center gap-3 py-3 px-3 rounded-xl bg-green-50 text-green-700 hover:bg-green-100 transition-all border border-green-100 group shadow-sm shadow-green-900/5"
+        >
+          <div className="bg-green-600 text-white p-1.5 rounded-lg group-hover:scale-110 transition-transform shadow-md">
+            <Search className="w-4 h-4" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[13px] font-bold">AI ตรวจโรคพืช</span>
+            <span className="text-[10px] opacity-70">วิเคราะห์ใบไม้จากรูปถ่าย</span>
+          </div>
+        </Link>
       </div>
     </div>
   );

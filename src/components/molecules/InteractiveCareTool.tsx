@@ -16,10 +16,10 @@ export function InteractiveCareTool() {
   const setAnimatingItemId = useStore((s) => s.setAnimatingItemId);
   const items = useStore((s) => s.items);
   const updateItem = useStore((s) => s.updateItem);
-  
+
   const groupRef = useRef<THREE.Group>(null);
   const particlesRef = useRef<THREE.Points>(null);
-  
+
   const [phase, setPhase] = useState<"idle" | "moving" | "pouring" | "returning">("idle");
   const [progress, setProgress] = useState(0);
 
@@ -56,41 +56,43 @@ export function InteractiveCareTool() {
       // พวยกาห่างจากจุดศูนย์กลางฝักบัว 0.4 หน่วย ดังนั้นต้องเลื่อนฝักบัวไปทางซ้าย 0.4
       const xOffset = activeTool === 'water' ? -0.4 : 0;
       const targetPoint = new THREE.Vector3(tx + xOffset, ty + 2.5, tz);
-      
-      groupRef.current.position.lerp(targetPoint, 0.1);
+
+      groupRef.current.position.lerp(targetPoint, 0.15); // เร็วขึ้น (เดิม 0.1)
       if (groupRef.current.position.distanceTo(targetPoint) < 0.1) {
         setPhase("pouring");
       }
     } else if (phase === "pouring") {
       // เอียงเครื่องมือ
       groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -Math.PI / 3, 0.1);
-      
+
       // อัปเดต Particle (น้ำ/ปุ๋ย)
       if (particlesRef.current) {
-        const attr = particlesRef.current.geometry.attributes.position;
-        for (let i = 0; i < particlesCount; i++) {
-          const idx = i * 3;
-          if (attr.array[idx + 1] < -2.0) {
-            attr.array[idx] = (Math.random() - 0.5) * 0.2;
-            attr.array[idx + 1] = 0;
-            attr.array[idx + 2] = (Math.random() - 0.5) * 0.2;
-          } else {
-            attr.array[idx + 1] -= activeTool === 'water' ? 0.15 : 0.1;
-            attr.array[idx] += (Math.random() - 0.5) * 0.02;
+        const attr = particlesRef.current.geometry.attributes.position as THREE.BufferAttribute;
+        if (attr) {
+          for (let i = 0; i < particlesCount; i++) {
+            const idx = i * 3;
+            if (attr.array[idx + 1] < -2.0) {
+              attr.array[idx] = (Math.random() - 0.5) * 0.2;
+              attr.array[idx + 1] = 0;
+              attr.array[idx + 2] = (Math.random() - 0.5) * 0.2;
+            } else {
+              attr.array[idx + 1] -= activeTool === 'water' ? 0.15 : 0.1;
+              attr.array[idx] += (Math.random() - 0.5) * 0.02;
+            }
           }
+          attr.needsUpdate = true;
         }
-        attr.needsUpdate = true;
       }
 
       setProgress(prev => prev + delta);
-      if (progress > 3.5) { 
+      if (progress > 2) { // ลดเวลาลงเหลือ 1.5 วินาที (เดิม 3.5)
         updateItem(targetItem.id, { health: 100 });
         setPhase("returning");
       }
     } else if (phase === "returning") {
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, 0.1);
-      groupRef.current.position.y += 0.15;
-      
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, 0.15); // หมุนกลับเร็วขึ้น
+      groupRef.current.position.y += 0.3; // เลื่อนขึ้นเร็วขึ้น (เดิม 0.15)
+
       if (groupRef.current.position.y > 10) {
         setAnimatingItemId(null);
         setActiveTool(null);
@@ -101,13 +103,15 @@ export function InteractiveCareTool() {
 
   if (!activeTool || !animatingItemId) return null;
 
+  const [tx, , tz] = targetItem ? gridToPosition(targetItem.gridX, targetItem.gridZ) : [0, 0, 0];
+
   return (
-    <group ref={groupRef} position={[targetItem ? gridToPosition(targetItem.gridX, targetItem.gridZ)[0] : 0, 10, targetItem ? gridToPosition(targetItem.gridX, targetItem.gridZ)[2] : 0]}>
+    <group ref={groupRef} position={[tx, 10, tz]}>
       {/* UI เปอร์เซ็นต์ */}
       <Html position={[0, 1.5, 0]} center>
         <div className={`bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-[10px] font-bold shadow-sm border whitespace-nowrap transition-opacity duration-300 ${phase === 'pouring' ? 'opacity-100' : 'opacity-0'}`}>
           <span className={activeTool === 'water' ? 'text-blue-600' : 'text-orange-700'}>
-            กำลัง{activeTool === 'water' ? 'รดน้ำ' : 'ใส่ปุ๋ย'}... {Math.min(100, Math.round((progress/3.5)*100))}%
+            กำลัง{activeTool === 'water' ? 'รดน้ำ' : 'ใส่ปุ๋ย'}... {Math.min(100, Math.round((progress / 2) * 100))}%
           </span>
         </div>
       </Html>
@@ -126,21 +130,25 @@ export function InteractiveCareTool() {
           </>
         )}
       </group>
-      
+
       {/* เอฟเฟกต์เทน้ำ/ปุ๋ย - แสดงเฉพาะตอนรด */}
-      <points 
-        ref={particlesRef} 
-        position={[activeTool === 'water' ? 0.4 : 0, -0.3, 0]} 
+      <points
+        ref={particlesRef}
+        position={[activeTool === 'water' ? 0.4 : 0, -0.3, 0]}
         visible={phase === "pouring"}
       >
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={particlesCount} array={positions} itemSize={3} />
+          <bufferAttribute
+            attach="attributes-position"
+            args={[positions, 3]}
+          />
         </bufferGeometry>
-        <pointsMaterial 
-          color={activeTool === 'water' ? "#3b82f6" : "#78350f"} 
-          size={0.06} 
-          transparent 
-          opacity={0.8} 
+        <pointsMaterial
+          color={activeTool === 'water' ? "#3b82f6" : "#78350f"}
+          size={0.12}
+          transparent
+          opacity={0.8}
+          sizeAttenuation
         />
       </points>
     </group>
