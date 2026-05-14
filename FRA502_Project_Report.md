@@ -47,6 +47,7 @@
 - รองรับโมเดลพืช 6 ชนิด: ทิวลิป, กุหลาบ, มะเขือเทศ, ทานตะวัน, มอนสเตอร่า, ลิลลี่ม่วง
 - รองรับการตรวจสุขภาพพืช 38 คลาส (ตามมาตรฐาน PlantVillage)
 - รองรับโซนพืช 3 โซน: ไม้ดอกเมืองหนาว, สมุนไพร, ผักสวนครัว
+- รองรับร้านค้าที่มีหมวดหมู่สินค้า 6 หมวด (เมล็ดพันธุ์, ไม้ดอก, ผักสวนครัว, อุปกรณ์ปลูก, ดินและปุ๋ย, ทั้งหมด), ระบบสินค้าโปรด (Favorites), ระบบโค้ดส่วนลด, แพ็กเกจเริ่มต้นมือใหม่ และระบบจำลองการชำระเงิน
 
 ---
 
@@ -252,6 +253,26 @@ useEffect(() => {
 
 ใช้ Next.js Middleware (`src/proxy.ts`) ตรวจสอบ cookie `is_authenticated` หากผู้ใช้ยังไม่ได้ login จะ redirect ไปที่ `/login` ทันที ข้อมูลผู้ใช้และ Theme เก็บใน `localStorage` (`gardenverse_users`, `current_user`, `gardenverse_theme`)
 
+#### 3.1.6 การพัฒนาส่วน E-commerce (Shop)
+
+ใช้ React `useState` จัดการ State ของร้านค้าภายใน `src/app/shop/page.tsx` แบ่งเป็น 4 ส่วนหลัก:
+
+```typescript
+const [cartItems, setCartItems] = useState<CartItem[]>([]);
+const [activeCategory, setActiveCategory] = useState("all");
+const [recommended, setRecommended] = useState(RECOMMENDED_PRODUCTS);
+const [bestSellers, setBestSellers] = useState(BEST_SELLERS);
+const [showFavorites, setShowFavorites] = useState(false);
+```
+
+จุดเด่นในการออกแบบฝั่ง Shop:
+
+- **Category Filter**: ใช้ฟิลด์ `categoryId` ฝังในข้อมูลสินค้าและ filter แบบ derived state (`ALL_PRODUCTS.filter(p => p.categoryId === activeCategory)`) ทำให้ไม่ต้อง state ซ้อน
+- **Favorites Toggle**: ใช้ `Array.from(new Map(...))` deduplicate รายการที่ปรากฏซ้ำในทั้ง `recommended` และ `bestSellers` ก่อนแสดงผล
+- **Discount Code**: ใช้ Pattern Whitelist (เฉพาะโค้ด `GARDEN10`) ใน `CartSidebar.tsx` คำนวณส่วนลดเป็น `(totalPrice * appliedDiscount) / 100` แสดงสรุปราคาแบบสามบรรทัด (ราคาสินค้า / ส่วนลด / ยอดสุทธิ)
+- **Add to Cart Logic**: ใช้ Functional Update + Map/Find เพื่อให้กดเพิ่มสินค้าเดิมแล้ว `quantity + 1` แทนที่จะสร้างรายการใหม่ทุกครั้ง
+- **Starter Pack**: ใช้ callback prop `onAddStarterPack` ส่งจาก `shop/page.tsx` ลงไปยัง `ShopBanners` เพื่อ inject `handleAddToCart()` แบบ inversion-of-control ทำให้ banner สามารถเพิ่มสินค้าได้โดยไม่ผูกกับ state ภายใน
+
 ### 3.2 การบูรณาการ Hardware/AI (Integration)
 
 #### 3.2.1 ESP32 → Firebase Realtime Database
@@ -402,8 +423,14 @@ export function proxy(request: NextRequest) {
 - ใช้ `CareHistoryContent` แสดงตารางและสรุปการรดน้ำ ใส่ปุ๋ย รวมถึงสุขภาพย้อนหลัง
 
 #### หน้าร้านค้า (`/shop`)
-- ProductGrid: สินค้าแนะนำและสินค้าขายดี (ทิวลิป, ลาเวนเดอร์, โหระพา, มะเขือเทศเชอร์รี่, ดินปลูก, กุหลาบ, ผักสลัด, ปุ๋ยอินทรีย์, เครื่องวัดความชื้น, พริกหวาน)
-- CartSidebar: ตะกร้าสินค้าพร้อมปรับจำนวน + ลบรายการ
+- **ShopHeader**: หัวร้านค้าพร้อมปุ่ม "จัดการสินค้าโปรด" สลับโหมดแสดงเฉพาะสินค้าที่ผู้ใช้กดหัวใจ
+- **ShopSearchCategories**: ช่องค้นหาและแถบหมวดหมู่ 6 หมวด (ทั้งหมด / เมล็ดพันธุ์ / ไม้ดอก / ผักสวนครัว / อุปกรณ์ปลูก / ดินและปุ๋ย) กดเปลี่ยนหมวดเพื่อกรองสินค้าได้ทันที
+- **ShopBanners**: แบนเนอร์ 3 ช่อง — ส่งฟรีเมื่อซื้อครบ 500 บาท, ลด 10% ด้วยโค้ด `GARDEN10` (กดเพื่อ copy clipboard อัตโนมัติ), แพ็กเกจเริ่มต้นมือใหม่ราคา 399 บาท (กดเพื่อเพิ่มลงตะกร้าได้ทันที)
+- **ProductGrid**: สินค้าแนะนำและสินค้าขายดีรวม 14 รายการ ครอบคลุมหลายหมวด ได้แก่ ทิวลิป, ลาเวนเดอร์, โหระพา, มะเขือเทศเชอร์รี่, ดินปลูกอเนกประสงค์, กระถางต้นไม้มินิมอล, ทานตะวัน, ไฮเดรนเยีย, ขุยมะพร้าว, บัวรดน้ำมินิมอล, ชุดเครื่องมือปลูก 3 ชิ้น, ดอกเดซี่, ฟอร์เก็ตมีน็อต, เมล็ดผักสลัดรวม
+- **ProductCard**: แต่ละการ์ดแสดงรูป, ชื่อ, ชื่อวิทยาศาสตร์, ราคา, คะแนนรีวิว (Star + จำนวนรีวิว), ปุ่มเพิ่มลงตะกร้า และปุ่มหัวใจ (Favorite) ที่กดสลับสถานะได้
+- **CartSidebar**: ตะกร้าสินค้าพร้อมปรับจำนวน (+/−), ลบรายการ, ช่องกรอกโค้ดส่วนลด (รองรับโค้ด `GARDEN10` ลด 10%), แสดงสรุปราคาสินค้า–ส่วนลด–ยอดสุทธิ, ปุ่ม "ไปยังหน้าชำระเงิน" (จำลองการชำระเงินผ่าน alert)
+- **ShopFeatures / SuggestedProducts**: ส่วนเสริมแสดงจุดเด่นของร้านและสินค้าแนะนำเพิ่มเติม
+- ตัวอย่าง Empty State: เมื่อยังไม่มีสินค้าโปรด แสดงข้อความ "ยังไม่มีสินค้าโปรด" พร้อมปุ่ม "เลือกดูสินค้าเลย" และเมื่อหมวดหมู่ที่เลือกไม่มีสินค้าแสดงข้อความแนะนำให้เปลี่ยนหมวด
 
 #### หน้า Login (`/login`)
 - รองรับทั้ง Sign-in (Username/Email + Password) และ Sign-up (Username + Email + Password)
@@ -431,7 +458,9 @@ export function proxy(request: NextRequest) {
 | **PostgreSQL connection ถูกตัด (idle timeout)** | Supabase pooler ตัด connection ที่ idle นาน | เปลี่ยนเป็นเปิด connection ใหม่ทุกครั้งที่ insert (`get_pg_conn()`) |
 | **Type Mismatch ใน PostgreSQL** | คอลัมน์ `temperature/humidity` เป็น `INTEGER` แต่ ESP32 ส่ง float | แก้คอลัมน์ใน DB เป็น `FLOAT` / `NUMERIC` |
 | **Browser Context Menu บัง 3D View** | คลิกขวาเปิดเมนูเบราว์เซอร์ทับ Garden3D | เพิ่ม `onContextMenu={(e) => e.preventDefault()}` ที่ `<Canvas>` และล็อก `OrbitControls` ไม่ให้ใช้คลิกขวา |
-| **รูปจาก Unsplash ใช้ใน Next.js Image ไม่ได้** | Next.js บล็อก remote image ที่ไม่ได้ allow | แก้ `next.config.ts` เพิ่ม `remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }]` |
+| **รูปจาก Unsplash โหลดช้าและไม่เสถียร** | URL ภายนอกขึ้นกับ network และ Next.js ต้อง allow domain | ในตอนแรกแก้ `next.config.ts` เพิ่ม `remotePatterns` ของ `images.unsplash.com` ต่อมาเปลี่ยนเป็นใช้รูปสินค้าใน `public/images/products/` ทั้งหมด (เช่น `tulip.png`, `lavender.png`, `sunflower.png`) เพื่อให้โหลดเร็วและทำงาน Offline ได้ |
+| **ข้อมูลสินค้าซ้ำในหน้า Favorites** | สินค้าตัวเดียวกันถูก toggle ใน 2 array (`recommended` + `bestSellers`) | ใช้ `Array.from(new Map(items.map(it => [it.id, it])).values())` deduplicate ตาม `id` ก่อนเรนเดอร์ |
+| **Category Filter ไม่ครอบคลุมทั้ง 2 ProductGrid** | เดิม filter แยกใน 2 grid ทำให้ผลลัพธ์ไม่ถูก | รวมทั้ง 2 ลิสต์เป็น `ALL_PRODUCTS = [...recommended, ...bestSellers]` แล้ว filter รวมก่อนส่งให้ `ProductGrid` เดียว |
 | **Supabase ดึงข้อมูลล้มเหลวกรณีไม่มี table** | ตาราง `plants` ยังไม่ได้สร้าง | ใช้ try/catch fallback ไปดึงข้อมูลจาก `localStorage` แทน เพื่อให้ระบบยังทำงานต่อได้ |
 | **State ของ 3D item ใหญ่/สับสน** | useState ในหลาย component ทำ prop drilling | ย้ายไปใช้ Zustand เป็น Global Store เดียว ทำให้ component แต่ละตัวเข้าถึง state ได้โดยตรง |
 
@@ -453,6 +482,7 @@ export function proxy(request: NextRequest) {
 | 4. ระบบแจ้งเตือนและให้คำแนะนำ | ✅ AI ตรวจโรคพร้อม `ADVICE_MAP` 38 คำแนะนำ + Notification badge ใน Navbar |
 | 5. ศึกษา Full-stack Web Development | ✅ ใช้เทคโนโลยีครบทั้ง Frontend (Next.js + R3F), Backend (FastAPI), Database (PostgreSQL/Firebase), IoT (ESP32) |
 | 6. บูรณาการ AI ตรวจโรคพืช (เพิ่มเติม) | ✅ MobileNet จำแนกได้ 38 คลาส, Confidence 70–98% |
+| 7. ระบบ E-commerce ครบวงจร (เพิ่มเติม) | ✅ ร้านค้าที่มี 6 หมวดหมู่, Favorites Toggle, โค้ดส่วนลด `GARDEN10`, Starter Pack 399 บาท, Cart พร้อม Checkout Simulation |
 
 ผลลัพธ์ที่ได้แสดงให้เห็นว่า การใช้สถาปัตยกรรมแบบ **Layered Architecture** (Hardware → Bridge → Database → AI → Frontend) ช่วยลด coupling ระหว่างระบบ และทำให้แต่ละส่วนสามารถพัฒนาและทดสอบแยกได้ ในขณะที่ **Atomic Design** ช่วยให้ Frontend ขยายต่อได้ง่ายและ Reusable สูง
 
