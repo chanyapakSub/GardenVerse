@@ -125,8 +125,7 @@ export function FertilizingAnimation() {
             <bufferAttribute
               attach="attributes-position"
               count={particlesCount}
-              array={positions}
-              itemSize={3}
+              args={[positions, 3]}
             />
           </bufferGeometry>
           <pointsMaterial color="#92400e" size={0.1} sizeAttenuation />

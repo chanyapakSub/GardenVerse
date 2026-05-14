@@ -125,7 +125,7 @@ function ItemsRenderer() {
                 <div 
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedItemId(isSelected ? null : item.id);
+                    selectItem(isSelected ? null : item.id);
                   }}
                   className={`
                     px-2 py-0.5 rounded-md shadow-sm text-[10px] font-bold whitespace-nowrap transition-all cursor-pointer border

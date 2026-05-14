@@ -9,9 +9,10 @@ import { Search } from "lucide-react";
 
 interface SidebarProps {
   onPlantClick?: (plantId: string) => void;
+  selectedPlantId?: string;
 }
 
-export default function Sidebar({ onPlantClick }: SidebarProps) {
+export default function Sidebar({ onPlantClick, selectedPlantId }: SidebarProps) {
   const [activeZone, setActiveZone] = useState<string[]>(zones.map(z => z.id));
   const selectedPlotId = useStore(s => s.selectedPlotId);
   const setSelectedPlotId = useStore(s => s.setSelectedPlotId);

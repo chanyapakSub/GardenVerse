@@ -4,6 +4,7 @@ import tensorflow as tf
 from PIL import Image, ImageOps
 import numpy as np
 import io
+import os
 import uvicorn
 
 app = FastAPI(title="GardenVerse AI Disease Detection API")
@@ -127,6 +128,10 @@ ADVICE_MAP = {
     "Tomato Healthy (มะเขือเทศสุขภาพดี)": "ควรให้ปุ๋ยสมดุล ตัดแต่งกิ่ง และตรวจสอบโรคแมลงอย่างสม่ำเสมอ"
 }
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "model_loaded": model is not None}
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     if model is None:
@@ -164,4 +169,5 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)

@@ -130,8 +130,7 @@ export function WateringAnimation() {
             <bufferAttribute
               attach="attributes-position"
               count={particlesCount}
-              array={positions}
-              itemSize={3}
+              args={[positions, 3]}
             />
           </bufferGeometry>
           <pointsMaterial color="#60a5fa" size={0.1} transparent opacity={0.8} sizeAttenuation />
