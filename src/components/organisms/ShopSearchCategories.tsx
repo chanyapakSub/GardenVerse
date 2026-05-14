@@ -1,22 +1,24 @@
 "use client";
 
-import { Search, LayoutGrid, Flower2, Leaf, Carrot, Shovel, Droplets, SprayCan, TicketPercent } from "lucide-react";
+import { Search, LayoutGrid, Flower2, Leaf, Carrot, Shovel, Droplets, SprayCan, TicketPercent, Sprout } from "lucide-react";
 import { useState } from "react";
 
 const CATEGORIES = [
   { id: "all", label: "ทั้งหมด", icon: LayoutGrid },
-  { id: "flowers", label: "พืชดอก", icon: Flower2 },
-  { id: "herbs", label: "สมุนไพร", icon: Leaf },
+  { id: "seeds", label: "เมล็ดพันธุ์", icon: Sprout },
+  { id: "flowers", label: "ไม้ดอก", icon: Flower2 },
   { id: "veggies", label: "ผักสวนครัว", icon: Carrot },
   { id: "tools", label: "อุปกรณ์ปลูก", icon: Shovel },
   { id: "soil", label: "ดินและปุ๋ย", icon: Droplets },
-  { id: "maintenance", label: "สารบำรุง", icon: SprayCan },
-  { id: "promotions", label: "โปรโมชั่น", icon: TicketPercent },
 ];
 
-export default function ShopSearchCategories() {
-  const [activeCategory, setActiveCategory] = useState("all");
-
+export default function ShopSearchCategories({ 
+  activeCategory = "all", 
+  onCategoryChange 
+}: { 
+  activeCategory?: string;
+  onCategoryChange?: (categoryId: string) => void;
+}) {
   return (
     <div className="mb-6 space-y-4">
       {/* Search Bar */}
@@ -40,7 +42,7 @@ export default function ShopSearchCategories() {
           return (
             <button
               key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
+              onClick={() => onCategoryChange && onCategoryChange(cat.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 border ${
                 isActive 
                   ? "bg-green-50 border-green-200 text-green-700 shadow-sm" 

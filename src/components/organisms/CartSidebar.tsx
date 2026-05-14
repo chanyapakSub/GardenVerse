@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Trash2, Plus, Minus } from "lucide-react";
 import Image from "next/image";
 
@@ -16,7 +19,27 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ cartItems, onChangeQuantity, onRemoveFromCart }: CartSidebarProps) {
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
+
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const discountAmount = (totalPrice * appliedDiscount) / 100;
+  const finalPrice = totalPrice - discountAmount;
+
+  const handleApplyDiscount = () => {
+    if (discountCode.trim().toUpperCase() === "GARDEN10") {
+      setAppliedDiscount(10);
+      alert("โค้ดลดราคา 10% ถูกใช้งานแล้ว!");
+    } else {
+      setAppliedDiscount(0);
+      alert("โค้ดไม่ถูกต้อง หรือหมดอายุ");
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(0);
+    setDiscountCode("");
+  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full">
@@ -68,11 +91,60 @@ export default function CartSidebar({ cartItems, onChangeQuantity, onRemoveFromC
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-semibold text-gray-700">ราคารวม</span>
-          <span className="text-lg font-bold text-gray-900">฿{totalPrice}</span>
+        {cartItems.length > 0 && (
+          <div className="mb-4">
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="กรอกโค้ดส่วนลด" 
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value)}
+                disabled={appliedDiscount > 0}
+                className="flex-grow border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 disabled:bg-gray-100"
+              />
+              {appliedDiscount > 0 ? (
+                <button 
+                  onClick={handleRemoveDiscount}
+                  className="bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors whitespace-nowrap"
+                >
+                  ยกเลิก
+                </button>
+              ) : (
+                <button 
+                  onClick={handleApplyDiscount}
+                  className="bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors whitespace-nowrap"
+                >
+                  ใช้โค้ด
+                </button>
+              )}
+            </div>
+            {appliedDiscount > 0 && (
+              <p className="text-green-600 text-xs mt-2 flex items-center gap-1">
+                <span>✓</span> โค้ด GARDEN10 ใช้งานได้ (ลด 10%)
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <span>ราคาสินค้า</span>
+            <span>฿{totalPrice}</span>
+          </div>
+          {appliedDiscount > 0 && (
+            <div className="flex items-center justify-between text-sm text-green-600">
+              <span>ส่วนลด (10%)</span>
+              <span>-฿{discountAmount.toFixed(0)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <span className="text-sm font-semibold text-gray-700">ยอดสุทธิ</span>
+            <span className="text-lg font-bold text-gray-900">฿{finalPrice.toFixed(0)}</span>
+          </div>
         </div>
+
         <button 
+          onClick={() => alert(`จำลองการชำระเงินจำนวน ฿${finalPrice.toFixed(0)} สำเร็จ!`)}
           disabled={cartItems.length === 0}
           className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors shadow-sm shadow-green-200"
         >

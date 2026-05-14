@@ -11,6 +11,7 @@ interface ProductCardProps {
   image: string;
   isFavorite?: boolean;
   onAddToCart?: () => void;
+  onToggleFavorite?: () => void;
 }
 
 export default function ProductCard({
@@ -23,13 +24,17 @@ export default function ProductCard({
   image,
   isFavorite = false,
   onAddToCart,
+  onToggleFavorite,
 }: ProductCardProps) {
   return (
     <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group">
       {/* Favorite Button */}
-      <button className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-gray-50 transition-colors bg-white/80 backdrop-blur-sm shadow-sm z-10">
+      <button 
+        onClick={onToggleFavorite}
+        className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-gray-50 transition-colors bg-white/80 backdrop-blur-sm shadow-sm z-10"
+      >
         <Heart 
-          className={`w-5 h-5 ${isFavorite ? "fill-green-500 text-green-500" : "text-gray-300 group-hover:text-gray-400"}`} 
+          className={`w-5 h-5 ${isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 group-hover:text-gray-400"}`} 
         />
       </button>
 

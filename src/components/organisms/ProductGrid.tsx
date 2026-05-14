@@ -18,6 +18,7 @@ interface ProductGridProps {
   products: Product[];
   viewAllLink?: string;
   onAddToCart?: (product: Product) => void;
+  onToggleFavorite?: (id: string) => void;
 }
 
 export default function ProductGrid({ 
@@ -25,6 +26,7 @@ export default function ProductGrid({
   products, 
   viewAllLink = "#",
   onAddToCart,
+  onToggleFavorite,
 }: ProductGridProps) {
   return (
     <div className="mb-8">
@@ -43,6 +45,7 @@ export default function ProductGrid({
             key={product.id} 
             {...product} 
             onAddToCart={() => onAddToCart && onAddToCart(product)}
+            onToggleFavorite={() => onToggleFavorite && onToggleFavorite(product.id)}
           />
         ))}
       </div>
