@@ -1,6 +1,12 @@
 import { ShoppingBag, Heart } from "lucide-react";
 
-export default function ShopHeader() {
+export default function ShopHeader({ 
+  onToggleShowFavorites, 
+  isShowingFavorites 
+}: { 
+  onToggleShowFavorites?: () => void;
+  isShowingFavorites?: boolean;
+}) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div className="flex items-center gap-3">
@@ -13,9 +19,16 @@ export default function ShopHeader() {
         </div>
       </div>
 
-      <button className="flex items-center gap-2 px-4 py-2 bg-white border border-green-200 text-green-600 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors">
-        <Heart className="w-4 h-4" />
-        จัดการสินค้าโปรด
+      <button 
+        onClick={onToggleShowFavorites}
+        className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+          isShowingFavorites 
+            ? "bg-green-500 text-white border-green-500 hover:bg-green-600 shadow-sm shadow-green-200" 
+            : "bg-white border-green-200 text-green-600 hover:bg-green-50"
+        }`}
+      >
+        <Heart className={`w-4 h-4 ${isShowingFavorites ? "fill-white" : ""}`} />
+        {isShowingFavorites ? "กลับไปหน้าสินค้าทั้งหมด" : "จัดการสินค้าโปรด"}
       </button>
     </div>
   );
