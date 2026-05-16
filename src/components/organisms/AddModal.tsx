@@ -1,8 +1,8 @@
 "use client";
 
-import { X, Sprout, Check } from "lucide-react";
+import { X, Sprout, Check, Cpu } from "lucide-react";
 import { useState } from "react";
-import { useStore, PLANT_CATALOG, DECO_CATALOG } from "@/store/useStore";
+import { useStore, PLANT_CATALOG, DECO_CATALOG, DEVICE_CATALOG } from "@/store/useStore";
 
 export default function AddModal() {
   const isOpen = useStore((s) => s.isAddModalOpen);
@@ -12,25 +12,30 @@ export default function AddModal() {
   const updateItem = useStore((s) => s.updateItem);
   const removeItem = useStore((s) => s.removeItem);
   const selectItem = useStore((s) => s.selectItem);
+  const getItemByDeviceId = useStore((s) => s.getItemByDeviceId);
 
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   const pendingItem = items.find((it) => it.id === pendingItemId);
+  const isDeco = pendingItem?.type === 'deco';
 
   if (!isOpen) return null;
 
   const handleConfirm = () => {
     if (!pendingItemId || !selectedPlantId) return;
-    const catalog = pendingItem?.type === 'deco' ? DECO_CATALOG : PLANT_CATALOG;
+    const catalog = isDeco ? DECO_CATALOG : PLANT_CATALOG;
     const plant = catalog.find((p) => p.id === selectedPlantId);
     updateItem(pendingItemId, {
       plantId: selectedPlantId,
       name: plant?.name,
       health: 100,
       plantedAt: new Date().toLocaleDateString("th-TH"),
+      deviceId: isDeco ? undefined : (selectedDeviceId ?? undefined),
     });
     selectItem(pendingItemId); // เลือก item นั้นเลยจะได้เห็นใน panel
     setSelectedPlantId(null);
+    setSelectedDeviceId(null);
     closeAddModal();
   };
 
@@ -40,6 +45,7 @@ export default function AddModal() {
       removeItem(pendingItemId);
     }
     setSelectedPlantId(null);
+    setSelectedDeviceId(null);
     closeAddModal();
   };
 
@@ -75,7 +81,7 @@ export default function AddModal() {
         {/* Catalog */}
         <div className="flex-1 overflow-y-auto p-5">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {(pendingItem?.type === 'deco' ? DECO_CATALOG : PLANT_CATALOG).map((plant) => {
+            {(isDeco ? DECO_CATALOG : PLANT_CATALOG).map((plant) => {
               const isSelected = selectedPlantId === plant.id;
               return (
                 <button
@@ -106,6 +112,65 @@ export default function AddModal() {
               );
             })}
           </div>
+
+          {/* ===== เลือกเซนเซอร์ (ESP32) — เฉพาะ pot/bed ไม่ใช่ deco ===== */}
+          {!isDeco && (
+            <div className="mt-6 pt-5 border-t border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <Cpu className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-bold text-gray-800">เลือกเซนเซอร์ (ESP32)</h3>
+                <span className="text-[11px] text-gray-400">ไม่บังคับ</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* None option */}
+                <button
+                  onClick={() => setSelectedDeviceId(null)}
+                  className={`relative p-3 rounded-xl border-2 text-left transition-all ${
+                    selectedDeviceId === null
+                      ? "border-emerald-500 bg-emerald-50"
+                      : "border-gray-200 bg-white hover:border-emerald-300"
+                  }`}
+                >
+                  <h4 className="font-bold text-gray-700 text-sm">ไม่ผูกเซนเซอร์</h4>
+                  <p className="text-[11px] text-gray-500 mt-0.5">ใช้ค่าจำลองแทน</p>
+                </button>
+
+                {DEVICE_CATALOG.map((dev) => {
+                  const owner = getItemByDeviceId(dev.id);
+                  const isUsedByOther = !!owner && owner.id !== pendingItemId;
+                  const isSelected = selectedDeviceId === dev.id;
+                  return (
+                    <button
+                      key={dev.id}
+                      onClick={() => !isUsedByOther && setSelectedDeviceId(dev.id)}
+                      disabled={isUsedByOther}
+                      className={`relative p-3 rounded-xl border-2 text-left transition-all ${
+                        isUsedByOther
+                          ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+                          : isSelected
+                          ? "border-emerald-500 bg-emerald-50 shadow-sm"
+                          : "border-gray-200 bg-white hover:border-emerald-300"
+                      }`}
+                    >
+                      {isSelected && !isUsedByOther && (
+                        <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <h4 className="font-bold text-gray-800 text-sm pr-6">{dev.name}</h4>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{dev.description}</p>
+                      {isUsedByOther && (
+                        <p className="text-[10px] text-orange-600 mt-1">
+                          กำลังใช้กับ: {owner?.name || owner?.id}
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

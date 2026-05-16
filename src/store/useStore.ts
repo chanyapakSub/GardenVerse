@@ -118,6 +118,29 @@ export const DECO_CATALOG: PlantInfo[] = [
   },
 ];
 
+// ===== ข้อมูลเซนเซอร์ (ESP32 nodes) =====
+export interface DeviceInfo {
+  id: string;          // ตรงกับ device_id ที่ ESP ส่งขึ้น Firebase
+  name: string;
+  sensors: string[];   // ['temperature', 'humidity', 'lux']
+  description: string;
+}
+
+export const DEVICE_CATALOG: DeviceInfo[] = [
+  {
+    id: 'esp32-sensor-01',
+    name: 'ESP32 #1 (BME680 + BH1750)',
+    sensors: ['temperature', 'humidity', 'lux'],
+    description: 'วัดอุณหภูมิ ความชื้นอากาศ และแสงสว่าง',
+  },
+  {
+    id: 'esp32-sensor-02',
+    name: 'ESP32 #2 (SHT3X + BH1750)',
+    sensors: ['temperature', 'humidity', 'lux'],
+    description: 'วัดอุณหภูมิ ความชื้นอากาศ และแสงสว่าง',
+  },
+];
+
 // ===== โครงสร้างข้อมูล Item =====
 export interface PlantItem {
   id: string;
@@ -132,6 +155,7 @@ export interface PlantItem {
   zone?: string;
   health?: number;
   plantedAt?: string;
+  deviceId?: string;   // device_id ของเซนเซอร์ที่ผูกกับ pot/plot นี้
 }
 
 // ===== แปลง grid coordinate เป็น position 3D =====
@@ -213,6 +237,9 @@ interface AppState {
 
   // Helper: ตรวจสอบว่า cell นี้ว่างมั้ย
   isCellOccupied: (gridX: number, gridZ: number) => boolean;
+
+  // Helper: หา item ที่ผูกอยู่กับ deviceId นี้ (ใช้กรองตอนเลือกเซนเซอร์)
+  getItemByDeviceId: (deviceId: string) => PlantItem | undefined;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -289,5 +316,9 @@ export const useStore = create<AppState>((set, get) => ({
     return items
       .filter(it => it.plotId === selectedPlotId)
       .some((it) => it.gridX === gridX && it.gridZ === gridZ);
+  },
+
+  getItemByDeviceId: (deviceId) => {
+    return get().items.find((it) => it.deviceId === deviceId);
   },
 }));

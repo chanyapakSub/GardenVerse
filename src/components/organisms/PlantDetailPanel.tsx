@@ -15,11 +15,14 @@ import {
   Trash2,
   Save,
   X,
+  Cpu,
+  Lightbulb,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useStore, PLANT_CATALOG } from "@/store/useStore";
+import { useStore, PLANT_CATALOG, DEVICE_CATALOG } from "@/store/useStore";
+import { useLatestReading } from "@/lib/useLatestReading";
 
 export default function PlantDetailPanel() {
   const selectedItemId = useStore((s) => s.selectedItemId);
@@ -43,13 +46,23 @@ export default function PlantDetailPanel() {
   // Local state สำหรับฟอร์มแก้ไข
   const [editName, setEditName] = useState("");
   const [editZone, setEditZone] = useState("");
+  const [editDeviceId, setEditDeviceId] = useState<string>("");
 
   useEffect(() => {
     if (selectedItem) {
       setEditName(selectedItem.name || plant?.name || "");
       setEditZone(selectedItem.zone || "");
+      setEditDeviceId(selectedItem.deviceId || "");
     }
   }, [selectedItem, plant]);
+
+  // ===== Live sensor reading จาก Supabase Realtime =====
+  const { reading, isLoading: isReadingLoading, error: readingError } =
+    useLatestReading(selectedItem?.deviceId);
+
+  const device = selectedItem?.deviceId
+    ? DEVICE_CATALOG.find((d) => d.id === selectedItem.deviceId)
+    : null;
 
   // ===== Empty state: ยังไม่ได้เลือกอะไร =====
   if (!selectedItem) {
@@ -265,6 +278,87 @@ export default function PlantDetailPanel() {
               <span className="text-[11px] text-gray-800 font-medium">{plant.soil}</span>
             </div>
           </div>
+        </div>
+
+        {/* ===== Live sensor reading ===== */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-emerald-600" />
+              <h3 className="text-[14px] font-bold text-gray-800">ค่าจากเซนเซอร์</h3>
+            </div>
+            {isEditMode && (
+              <select
+                value={editDeviceId}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEditDeviceId(v);
+                  updateItem(selectedItem.id, { deviceId: v || undefined });
+                }}
+                className="text-[11px] border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-emerald-500"
+              >
+                <option value="">ไม่ผูกเซนเซอร์</option>
+                {DEVICE_CATALOG.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {!selectedItem.deviceId ? (
+            <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-4 text-center">
+              <p className="text-xs text-gray-500">
+                {isEditMode
+                  ? "เลือกเซนเซอร์จาก dropdown ด้านบนเพื่อผูกกับพืชนี้"
+                  : "ยังไม่ได้ผูกเซนเซอร์ — กด ✏ เพื่อแก้ไขแล้วเลือกเซนเซอร์"}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-xl p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-emerald-700">
+                  {device?.name || selectedItem.deviceId}
+                </span>
+                {reading && (
+                  <span className="text-[10px] text-gray-400">
+                    {new Date(reading.recorded_at).toLocaleTimeString("th-TH")}
+                  </span>
+                )}
+              </div>
+
+              {readingError ? (
+                <p className="text-[11px] text-red-500">โหลดข้อมูลไม่สำเร็จ: {readingError}</p>
+              ) : !reading && isReadingLoading ? (
+                <p className="text-[11px] text-gray-500">กำลังโหลด...</p>
+              ) : !reading ? (
+                <p className="text-[11px] text-gray-500">ยังไม่มีข้อมูลจากเซนเซอร์นี้</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="flex flex-col items-center text-center bg-white rounded-lg p-2">
+                    <Thermometer className="w-5 h-5 text-red-400" />
+                    <span className="text-[10px] text-gray-500 mt-1">อุณหภูมิ</span>
+                    <span className="text-sm font-bold text-gray-800">
+                      {reading.temperature != null ? `${reading.temperature.toFixed(1)}°C` : "-"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center text-center bg-white rounded-lg p-2">
+                    <Droplets className="w-5 h-5 text-blue-500" />
+                    <span className="text-[10px] text-gray-500 mt-1">ความชื้น</span>
+                    <span className="text-sm font-bold text-gray-800">
+                      {reading.humidity != null ? `${reading.humidity.toFixed(1)}%` : "-"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center text-center bg-white rounded-lg p-2">
+                    <Lightbulb className="w-5 h-5 text-yellow-500" />
+                    <span className="text-[10px] text-gray-500 mt-1">แสง</span>
+                    <span className="text-sm font-bold text-gray-800">
+                      {reading.lux != null ? `${Math.round(reading.lux)} lx` : "-"}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
