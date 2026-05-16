@@ -1,68 +1,106 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mail, Lock, ArrowRight, User } from "lucide-react";
+import { Mail, Lock, ArrowRight, User, Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
-  
+
   // Form states
-  const [identifier, setIdentifier] = useState(""); // For login (email or username)
-  const [email, setEmail] = useState(""); // For signup
-  const [username, setUsername] = useState(""); // For signup
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(""); // For signup only
   const [password, setPassword] = useState("");
-  
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setIsLoading(true);
 
     try {
-      const usersRaw = localStorage.getItem("gardenverse_users");
-      const users = usersRaw ? JSON.parse(usersRaw) : [];
-
       if (isLogin) {
-        // Handle Login
-        const user = users.find((u: any) => 
-          (u.email === identifier || u.username === identifier) && u.password === password
-        );
+        // ===== LOGIN =====
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-        if (user) {
-          // Success
-          localStorage.setItem("current_user", JSON.stringify({ username: user.username, email: user.email }));
-          document.cookie = "is_authenticated=true; path=/";
-          router.push("/home");
-        } else {
-          setError("Username/Email หรือรหัสผ่านไม่ถูกต้อง");
-        }
-      } else {
-        // Handle Sign Up
-        // Check if exists
-        const exists = users.find((u: any) => u.email === email || u.username === username);
-        if (exists) {
-          setError("Username หรือ Email นี้ถูกใช้งานแล้ว");
+        if (signInError) {
+          setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
           return;
         }
 
-        // Save new user
-        users.push({ username, email, password });
-        localStorage.setItem("gardenverse_users", JSON.stringify(users));
-        
+        if (data.session) {
+          router.push("/home");
+        }
+      } else {
+        // ===== SIGN UP =====
+        if (!username.trim()) {
+          setError("กรุณากรอก Username");
+          return;
+        }
+
+        // ตรวจสอบว่า username ซ้ำมั้ย
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("username", username.trim())
+          .single();
+
+        if (existingProfile) {
+          setError("Username นี้ถูกใช้งานแล้ว กรุณาเลือก Username อื่น");
+          return;
+        }
+
+        // สมัครสมาชิกผ่าน Supabase Auth
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { username: username.trim() },
+          },
+        });
+
+        if (signUpError) {
+          if (signUpError.message.includes("already registered")) {
+            setError("อีเมลนี้ถูกใช้งานแล้ว");
+          } else {
+            setError(signUpError.message);
+          }
+          return;
+        }
+
+        // บันทึก username ลง profiles table
+        if (data.user) {
+          const { error: profileError } = await supabase.from("profiles").insert({
+            id: data.user.id,
+            username: username.trim(),
+          });
+
+          if (profileError && !profileError.message.includes("duplicate")) {
+            console.warn("Profile insert warning:", profileError.message);
+          }
+        }
+
         setSuccess("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ");
         setIsLogin(true);
-        // Reset fields
         setPassword("");
-        setIdentifier(username);
+        setEmail(email); // คง email ไว้
+        setUsername("");
       }
-    } catch (err) {
+    } catch {
       setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,7 +134,7 @@ export default function LoginPage() {
             {error}
           </div>
         )}
-        
+
         {success && (
           <div className="mb-4 p-3 bg-green-50 text-green-600 text-sm rounded-xl border border-green-100 text-center">
             {success}
@@ -105,6 +143,7 @@ export default function LoginPage() {
 
         {/* Form */}
         <form className="space-y-4" onSubmit={handleAuth}>
+          {/* Username field (signup only) */}
           {!isLogin && (
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700 block ml-1" htmlFor="username">
@@ -128,50 +167,29 @@ export default function LoginPage() {
             </div>
           )}
 
-          {isLogin ? (
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700 block ml-1" htmlFor="identifier">
-                Username or Email
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                  <User size={18} />
-                </div>
-                <input
-                  type="text"
-                  id="identifier"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
-                  placeholder="Username หรือ Email"
-                  required
-                  suppressHydrationWarning
-                />
+          {/* Email field */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 block ml-1" htmlFor="email">
+              Email Address
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <Mail size={18} />
               </div>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
+                placeholder="you@example.com"
+                required
+                suppressHydrationWarning
+              />
             </div>
-          ) : (
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700 block ml-1" htmlFor="email">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                  <Mail size={18} />
-                </div>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
-                  placeholder="you@example.com"
-                  required={!isLogin}
-                  suppressHydrationWarning
-                />
-              </div>
-            </div>
-          )}
+          </div>
 
+          {/* Password field */}
           <div className="space-y-1">
             <div className="flex items-center justify-between ml-1">
               <label className="text-sm font-medium text-gray-700 block" htmlFor="password">
@@ -195,6 +213,7 @@ export default function LoginPage() {
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
                 placeholder="••••••••"
                 required
+                minLength={6}
                 suppressHydrationWarning
               />
             </div>
@@ -202,14 +221,19 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/20 active:scale-[0.98] mt-2"
+            disabled={isLoading}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/20 active:scale-[0.98] mt-2"
           >
-            <span>{isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}</span>
-            <ArrowRight size={18} />
+            {isLoading ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <>
+                <span>{isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}</span>
+                <ArrowRight size={18} />
+              </>
+            )}
           </button>
         </form>
-
-
 
         <p className="mt-8 text-center text-sm text-gray-500">
           {isLogin ? "ยังไม่มีบัญชีใช่ไหม? " : "มีบัญชีอยู่แล้วใช่ไหม? "}

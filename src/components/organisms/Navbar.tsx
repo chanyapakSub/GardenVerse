@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import SettingsModal from "./SettingsModal";
+import { supabase } from "@/lib/supabase";
 
 // ===== ข้อมูลการแจ้งเตือน =====
 const INITIAL_ALERTS = [
@@ -194,36 +195,37 @@ export default function Navbar() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("current_user");
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        if (user.username) setUsername(user.username);
-        if (user.profileImage) setProfileImage(user.profileImage);
-      } catch (e) {
-        // Ignore JSON parse errors
+    // โหลด username จาก Supabase session + profiles table
+    const loadUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", session.user.id)
+          .single();
+        if (profile?.username) setUsername(profile.username);
       }
-    }
+    };
+    loadUser();
+
+    // theme ยังคง localStorage เพราะเป็นแค่ UI preference
     const savedTheme = localStorage.getItem("gardenverse_theme");
     if (savedTheme) {
       document.documentElement.setAttribute("data-theme", savedTheme);
     }
   }, []);
 
-  const handleLogout = () => {
-    document.cookie = "is_authenticated=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    localStorage.removeItem("current_user");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push("/login");
   };
 
   const handleSaveSettings = (newUsername: string, newImage: string, theme: string) => {
     setUsername(newUsername);
     setProfileImage(newImage);
-    const userStr = localStorage.getItem("current_user");
-    let user = userStr ? JSON.parse(userStr) : {};
-    user.username = newUsername;
-    user.profileImage = newImage;
-    localStorage.setItem("current_user", JSON.stringify(user));
+    // profileImage เก็บใน localStorage ไว้ก่อน (UI preference)
+    localStorage.setItem("gardenverse_profileImage", newImage);
   };
 
   return (
