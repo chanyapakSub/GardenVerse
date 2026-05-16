@@ -190,7 +190,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [username, setUsername] = useState("นักปลูกต้นไม้");
-  const [profileImage, setProfileImage] = useState("/images/profile.png");
+  const [profileImage, setProfileImage] = useState("https://api.dicebear.com/7.x/avataaars/svg?seed=Garden");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {

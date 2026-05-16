@@ -4,39 +4,24 @@ import Navbar from "@/components/organisms/Navbar";
 import Sidebar from "@/components/organisms/Sidebar";
 import { WeatherWidget } from "@/components/molecules/WeatherWidget";
 import Image from "next/image";
-import { Search, Plus, MoreVertical, Droplet, ChevronDown, ChevronLeft, ChevronRight, MoveRight, Save, Lightbulb, Leaf, AlertTriangle, X } from "lucide-react";
+import { Search, Plus, MoreVertical, Droplet, ChevronDown, ChevronLeft, ChevronRight, MoveRight, Lightbulb, Leaf, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/store/useStore";
 import type { UserPlant } from "@/store/useStore";
+import AddPlantModal from "@/components/organisms/AddPlantModal";
 
 export default function PlantsPage() {
-  const { userPlants, setUserPlants, addUserPlant } = useStore();
+  const { userPlants, setUserPlants, openAddPlantModal } = useStore();
   const plants = userPlants;
 
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newPlantForm, setNewPlantForm] = useState({
-    name: "",
-    sciName: "",
-    image: "/images/flower/Tilip.png"
-  });
-
-  const imageOptions = [
-    { label: "ทิวลิป",       value: "/images/flower/Tilip.png" },
-    { label: "กุหลาบ",       value: "/images/flower/Rose.png" },
-    { label: "ลาเวนเดอร์",   value: "/images/flower/Lavender.png" },
-    { label: "ทานตะวัน",     value: "/images/flower/Tantawan.png" },
-    { label: "มะเขือเทศ",   value: "/images/vegetable/Tomato.png" },
-  ];
 
   useEffect(() => {
     const userStr = localStorage.getItem("current_user");
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
-        setCurrentUser(user);
         fetchPlants(user.username);
       } catch {
         setIsLoading(false);
@@ -66,46 +51,10 @@ export default function PlantsPage() {
     }
   };
 
-  // บันทึกลง Supabase เท่านั้น
-  const handleAddPlant = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser) return;
-
-    const newPlantData = {
-      username: currentUser.username,
-      name: newPlantForm.name,
-      sciName: newPlantForm.sciName,
-      status: "สุขภาพดี",
-      statusColor: "bg-green-50 text-green-600 border-green-200",
-      age: "1 วัน",
-      planted: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }),
-      water: "100%",
-      image: newPlantForm.image,
-    };
-
-    try {
-      const { data, error } = await supabase
-        .from("plants")
-        .insert([newPlantData])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // อัปเดต shared store ทันที (BottomPanel sync อัตโนมัติ)
-      addUserPlant(data as UserPlant);
-      setIsAddModalOpen(false);
-      setNewPlantForm({ name: "", sciName: "", image: "/images/flower/Tilip.png" });
-    } catch (err: any) {
-      console.error("บันทึกพืชไม่สำเร็จ:", err?.message ?? err);
-      alert("บันทึกไม่สำเร็จ กรุณาตรวจสอบว่าตาราง plants มีใน Supabase แล้ว");
-    }
-  };
-
   // Stats calculation
   const totalPlants = plants.length;
-  const healthyPlants = plants.filter((p) => p.status === "สุขภาพดี").length;
-  const warningPlants = plants.filter((p) => p.status === "เฝ้าระวัง").length;
+  const healthyPlants = plants.filter((p: UserPlant) => p.status === "สุขภาพดี").length;
+  const warningPlants = plants.filter((p: UserPlant) => p.status === "เฝ้าระวัง").length;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fa]">
@@ -136,7 +85,7 @@ export default function PlantsPage() {
               </div>
             </div>
             <button
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={openAddPlantModal}
               className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
@@ -191,7 +140,7 @@ export default function PlantsPage() {
                 เริ่มต้นปลูกพืชต้นแรกของคุณ เพื่อดูข้อมูลและติดตามการเจริญเติบโต
               </p>
               <button
-                onClick={() => setIsAddModalOpen(true)}
+                onClick={openAddPlantModal}
                 className="flex items-center gap-2 bg-white border border-green-200 text-green-600 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-green-50 transition-colors shadow-sm"
               >
                 <Plus className="w-4 h-4" />
@@ -200,7 +149,7 @@ export default function PlantsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-4 gap-4 mb-8">
-              {plants.map((plant) => (
+              {plants.map((plant: UserPlant) => (
                 <div key={plant.id} className="bg-white border border-gray-100 rounded-2xl p-4 hover:border-green-200 hover:shadow-md transition-all group flex flex-col">
                   <div className="relative h-40 w-full mb-4 flex items-center justify-center overflow-hidden bg-gray-50/50 rounded-xl">
                     <Image
@@ -302,7 +251,7 @@ export default function PlantsPage() {
             <h3 className="font-bold text-gray-800 text-sm mb-3">การดำเนินการด่วน</h3>
             <div className="flex flex-col gap-1">
               <button
-                onClick={() => setIsAddModalOpen(true)}
+                onClick={openAddPlantModal}
                 className="flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 rounded-lg transition-colors group text-sm text-gray-700"
               >
                 <div className="flex items-center gap-3">
@@ -335,85 +284,8 @@ export default function PlantsPage() {
         </div>
       </main>
 
-      {/* Add Plant Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-800">เพิ่มพืชใหม่</h2>
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddPlant} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700">ชื่อพืช</label>
-                <input
-                  type="text"
-                  required
-                  value={newPlantForm.name}
-                  onChange={(e) => setNewPlantForm({ ...newPlantForm, name: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
-                  placeholder="เช่น ทิวลิป, มะเขือเทศ"
-                  suppressHydrationWarning
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700">ชื่อวิทยาศาสตร์ (ไม่บังคับ)</label>
-                <input
-                  type="text"
-                  value={newPlantForm.sciName}
-                  onChange={(e) => setNewPlantForm({ ...newPlantForm, sciName: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-sm italic"
-                  placeholder="เช่น Tulipa spp."
-                  suppressHydrationWarning
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700">รูปภาพ</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {imageOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setNewPlantForm({ ...newPlantForm, image: opt.value })}
-                      className={`p-2 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${
-                        newPlantForm.image === opt.value
-                          ? "border-green-500 bg-green-50"
-                          : "border-transparent hover:bg-gray-50"
-                      }`}
-                    >
-                      <Image src={opt.value} alt={opt.label} width={40} height={40} className="object-contain" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Save className="w-4 h-4" /> บันทึก
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Shared Add Plant Modal */}
+      <AddPlantModal />
     </div>
   );
 }

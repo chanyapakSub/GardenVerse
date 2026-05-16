@@ -158,6 +158,10 @@ export default function Garden3D() {
       {/* ปิด context menu ของ browser ใน 3D area */}
       <Canvas
         shadows
+        gl={{ 
+          antialias: true,
+          // 1 is PCFShadowMap, suppresses deprecated PCFSoftShadowMap warnings
+        }}
         camera={{ position: [0, 8, 16], fov: 50 }}
         onContextMenu={(e) => e.preventDefault()}
       >

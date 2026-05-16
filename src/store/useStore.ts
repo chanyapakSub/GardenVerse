@@ -1,4 +1,10 @@
 import { create } from 'zustand';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // ===== ค่าคงที่สำหรับ Grid System =====
 export const GRID_SIZE = 10;        // 10x10 blocks
@@ -173,6 +179,20 @@ export function positionToGrid(x: number, z: number): [number, number] {
   return [gridX, gridZ];
 }
 
+// ===== โครงสร้างข้อมูล UserPlant (shared across pages) =====
+export interface UserPlant {
+  id: string | number;
+  username: string;
+  name: string;
+  sciName?: string;
+  status?: string;
+  statusColor?: string;
+  age?: string;
+  planted?: string;
+  water?: string;
+  image: string;
+}
+
 // ===== Store =====
 interface AppState {
   // Items
@@ -202,6 +222,11 @@ interface AppState {
   pendingItemId: string | null; // item ที่เพิ่งวางและรอเลือกพืช
   openAddModal: (itemId?: string) => void;
   closeAddModal: () => void;
+
+  // AddPlantModal (Add new plant to collection/database)
+  isAddPlantModalOpen: boolean;
+  openAddPlantModal: () => void;
+  closeAddPlantModal: () => void;
 
   // Interactive Care Tools
   activeCareTool: 'water' | 'fertilize' | null;
@@ -240,6 +265,12 @@ interface AppState {
 
   // Helper: หา item ที่ผูกอยู่กับ deviceId นี้ (ใช้กรองตอนเลือกเซนเซอร์)
   getItemByDeviceId: (deviceId: string) => PlantItem | undefined;
+
+  // ===== User Plants (shared: home BottomPanel <-> plants page) =====
+  userPlants: UserPlant[];
+  setUserPlants: (plants: UserPlant[]) => void;
+  addUserPlant: (plant: UserPlant) => void;
+  loadUserPlants: (username: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -275,6 +306,11 @@ export const useStore = create<AppState>((set, get) => ({
   pendingItemId: null,
   openAddModal: (itemId) => set({ isAddModalOpen: true, pendingItemId: itemId || null }),
   closeAddModal: () => set({ isAddModalOpen: false, pendingItemId: null }),
+
+  // ===== AddPlantModal =====
+  isAddPlantModalOpen: false,
+  openAddPlantModal: () => set({ isAddPlantModalOpen: true }),
+  closeAddPlantModal: () => set({ isAddPlantModalOpen: false }),
 
   // ===== Interactive Care Tools =====
   activeCareTool: null,
@@ -320,5 +356,23 @@ export const useStore = create<AppState>((set, get) => ({
 
   getItemByDeviceId: (deviceId) => {
     return get().items.find((it) => it.deviceId === deviceId);
+  },
+
+  // ===== User Plants =====
+  userPlants: [],
+  setUserPlants: (plants) => set({ userPlants: plants }),
+  addUserPlant: (plant) => set((state) => ({ userPlants: [...state.userPlants, plant] })),
+  loadUserPlants: async (username) => {
+    try {
+      const { data, error } = await supabase
+        .from('plants')
+        .select('*')
+        .eq('username', username)
+        .order('id', { ascending: true });
+      if (error) throw error;
+      set({ userPlants: data ?? [] });
+    } catch {
+      set({ userPlants: [] });
+    }
   },
 }));

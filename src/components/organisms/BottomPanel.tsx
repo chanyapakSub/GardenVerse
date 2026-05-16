@@ -61,10 +61,7 @@ export default function BottomPanel() {
         </h3>
         
         <div className="flex gap-1 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1 -mx-1 items-center">
-          {userPlants.length === 0 ? (
-            <p className="text-sm text-gray-400 italic px-2">ยังไม่มีพืช กดปุ่ม + เพื่อเพิ่ม</p>
-          ) : (
-            userPlants.map((plant, i) => (
+          {userPlants.map((plant: import("@/store/useStore").UserPlant, i: number) => (
               <div
                 key={plant.id}
                 className={`flex flex-col items-center gap-2 min-w-[80px] shrink-0 p-2 rounded-xl border transition-colors ${
@@ -84,10 +81,10 @@ export default function BottomPanel() {
                 </span>
               </div>
             ))
-          )}
+          }
           
           <button
-            onClick={() => openAddModal()}
+            onClick={() => useStore.getState().openAddPlantModal()}
             className="flex flex-col items-center justify-center gap-2 min-w-[80px] shrink-0 p-2 opacity-70 hover:opacity-100 transition-opacity"
           >
             <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 bg-gray-50 hover:bg-gray-100 transition-colors">

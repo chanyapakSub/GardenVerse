@@ -4,6 +4,7 @@ import PlantDetailPanel from "@/components/organisms/PlantDetailPanel";
 import BottomPanel from "@/components/organisms/BottomPanel";
 import Garden3D from "@/components/organisms/Garden3D";
 import AddModal from "@/components/organisms/AddModal";
+import AddPlantModal from "@/components/organisms/AddPlantModal";
 
 export default function Home() {
   return (
@@ -34,6 +35,7 @@ export default function Home() {
 
       {/* Modals */}
       <AddModal />
+      <AddPlantModal />
     </div>
   );
 }
