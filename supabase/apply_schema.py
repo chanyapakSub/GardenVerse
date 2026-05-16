@@ -35,7 +35,7 @@ try:
             cur.execute(sql_path.read_text(encoding="utf-8"))
 
         # verify all tables
-        for table in ("plants", "garden_items", "greenhouses", "plots"):
+        for table in ("plants", "garden_items", "greenhouses", "plots", "care_actions"):
             cur.execute(
                 "SELECT column_name, data_type FROM information_schema.columns "
                 "WHERE table_schema = 'public' AND table_name = %s "

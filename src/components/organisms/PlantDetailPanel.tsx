@@ -35,6 +35,7 @@ export default function PlantDetailPanel() {
   const selectItem = useStore((s) => s.selectItem);
   const setActiveCareTool = useStore((s) => s.setActiveCareTool);
   const setAnimatingItemId = useStore((s) => s.setAnimatingItemId);
+  const logCareAction = useStore((s) => s.logCareAction);
 
   const [showCareMenu, setShowCareMenu] = useState(false);
 
@@ -399,6 +400,7 @@ export default function PlantDetailPanel() {
                     setActiveCareTool('water');
                     setAnimatingItemId(selectedItem.id);
                     setShowCareMenu(false);
+                    void logCareAction('water', selectedItem.id, `รดน้ำ ${plant?.name ?? selectedItem.name ?? 'พืช'}`);
                   }}
                   className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
                 >
@@ -410,6 +412,7 @@ export default function PlantDetailPanel() {
                     setActiveCareTool('fertilize');
                     setAnimatingItemId(selectedItem.id);
                     setShowCareMenu(false);
+                    void logCareAction('fertilize', selectedItem.id, `ใส่ปุ๋ย ${plant?.name ?? selectedItem.name ?? 'พืช'}`);
                   }}
                   className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
                 >

@@ -73,34 +73,34 @@ function ItemsRenderer() {
               </mesh>
             )}
 
-            {/* Model - raised slightly to not be buried */}
-            <group position={[0, 0.05, 0]}>
-              {item.type === "pot" ? (
+            {/* Container model — ยกให้ก้นชนพื้นดิน (cylinder/box ตั้งกึ่งกลาง mesh) */}
+            {item.type === "pot" ? (
+              // pot: scale 0.6, geometry height 0.6 → ตัวจริง 0.36 → center y=0.18 ให้ก้นที่ y=0
+              <group position={[0, 0.2, 0]}>
                 <PlantPotModel scale={0.6} />
-              ) : item.type === "bed" ? (
+              </group>
+            ) : item.type === "bed" ? (
+              // bed: scale 0.6, box height 0.4 → ตัวจริง 0.24 → center y=0.12 ให้ก้นที่ y=0
+              <group position={[0, 0.12, 0]}>
                 <PlantTrayModel scale={0.6} />
-              ) : null /* deco doesn't have a container */}
-            </group>
+              </group>
+            ) : null /* deco: ไม่มี container */}
 
             {/* แสดงพืชหรือของตกแต่ง */}
             {plant && (
               <>
                 {item.type === "deco" ? (
-                  // ของตกแต่ง: แสดงโมเดลตรงๆ
                   <group position={[0, 0, 0]}>
                     <Plant3DModel modelPath={plant.modelPath} scale={1.0} />
                   </group>
                 ) : item.type === "pot" ? (
-                  // กระถาง: ปลูก 1 ต้น ตรงกลาง
-                  <group position={[0, 0.218, 0]}>
-                    <Plant3DModel
-                      modelPath={plant.modelPath}
-                      scale={1.0}
-                    />
+                  // กระถาง: ผิวดินอยู่ที่ y ≈ 0.18 + 0.168 = 0.348
+                  <group position={[0, 0.348, 0]}>
+                    <Plant3DModel modelPath={plant.modelPath} scale={1.0} />
                   </group>
                 ) : (
-                  // แปลง: ปลูก 4 ต้น (2x2 grid) (Soil surface is at 0.17)
-                  <group position={[0, 0.17, 0]}>
+                  // แปลง: ผิวดินอยู่ที่ y ≈ 0.12 + 0.12 = 0.24
+                  <group position={[0, 0.24, 0]}>
                     <Plant3DModel modelPath={plant.modelPath} scale={1.0} position={[-0.4, 0, -0.4]} />
                     <Plant3DModel modelPath={plant.modelPath} scale={1.0} position={[0.4, 0, -0.4]} />
                     <Plant3DModel modelPath={plant.modelPath} scale={1.0} position={[-0.4, 0, 0.4]} />

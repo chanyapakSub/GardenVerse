@@ -198,7 +198,7 @@ export default function CareHistoryContent({ selectedPlantId }: CareHistoryConte
         {/* Table + Alerts */}
         <div className="grid grid-cols-3 gap-4">
           <div className="col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <CareTable />
+            <CareTable itemId={selectedItem?.id ?? null} />
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
             <AlertPanel />

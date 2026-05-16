@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface Reading {
@@ -64,11 +64,14 @@ export default function SensorChart({ deviceId }: { deviceId?: string }) {
   const [readings, setReadings] = useState<Reading[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lastAtRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    (async () => {
+    lastAtRef.current = null;
+
+    const fetchInitial = async () => {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       setIsLoading(true);
       setError(null);
       try {
@@ -81,15 +84,46 @@ export default function SensorChart({ deviceId }: { deviceId?: string }) {
         if (deviceId) q = q.eq("device_id", deviceId);
         const { data, error } = await q;
         if (error) throw error;
-        if (!cancelled) setReadings(data ?? []);
+        if (cancelled) return;
+        const rows = data ?? [];
+        setReadings(rows);
+        lastAtRef.current = rows.length > 0 ? rows[rows.length - 1].recorded_at : null;
       } catch (e: unknown) {
         if (!cancelled) setError(e instanceof Error ? e.message : "load failed");
       } finally {
         if (!cancelled) setIsLoading(false);
       }
-    })();
+    };
+
+    // Poll: ดึงเฉพาะ row ที่มาใหม่กว่าตัวล่าสุดที่มี
+    const fetchIncremental = async () => {
+      try {
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        let q = supabase
+          .from("sensor_readings")
+          .select("recorded_at, temperature, humidity, lux")
+          .gt("recorded_at", lastAtRef.current ?? cutoff)
+          .order("recorded_at", { ascending: true })
+          .limit(500);
+        if (deviceId) q = q.eq("device_id", deviceId);
+        const { data, error } = await q;
+        if (error || !data || data.length === 0 || cancelled) return;
+        lastAtRef.current = data[data.length - 1].recorded_at;
+        setReadings((prev) => {
+          const cutMs = Date.now() - 24 * 60 * 60 * 1000;
+          const merged = [...prev, ...data];
+          return merged.filter((r) => new Date(r.recorded_at).getTime() >= cutMs);
+        });
+      } catch {
+        // เงียบไว้ — รอ poll รอบหน้า
+      }
+    };
+
+    fetchInitial();
+    const interval = setInterval(fetchIncremental, 5000); // poll ทุก 5 วินาที
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, [deviceId]);
 

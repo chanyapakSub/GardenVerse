@@ -294,6 +294,18 @@ interface AppState {
   renamePlot: (id: string, name: string) => Promise<void>;
   removePlot: (id: string) => Promise<void>;
   movePlot: (id: string, newGreenhouseId: string) => Promise<void>;
+
+  // ===== Care actions =====
+  logCareAction: (action: CareAction['action'], itemId?: string | null, detail?: string) => Promise<void>;
+}
+
+export interface CareAction {
+  id: number;
+  username: string;
+  itemId: string | null;
+  action: 'water' | 'fertilize' | 'note';
+  detail: string | null;
+  performedAt: string;
 }
 
 // ===== Persistence helpers (garden_items) =====
@@ -596,5 +608,18 @@ export const useStore = create<AppState>((set, get) => ({
       .update({ greenhouseId: newGreenhouseId })
       .eq('id', id);
     if (error) console.warn('movePlot failed:', error.message);
+  },
+
+  // ===== Care actions =====
+  logCareAction: async (action, itemId, detail) => {
+    const username = currentUsername();
+    if (!username) return;
+    const { error } = await supabase.from('care_actions').insert({
+      username,
+      itemId: itemId ?? null,
+      action,
+      detail: detail ?? null,
+    });
+    if (error) console.warn('logCareAction failed:', error.message);
   },
 }));
