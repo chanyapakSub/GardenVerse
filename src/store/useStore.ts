@@ -1,9 +1,4 @@
 import { create } from 'zustand';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ===== ค่าคงที่สำหรับ Grid System =====
 export const GRID_SIZE = 10;        // 10x10 blocks
@@ -123,19 +118,28 @@ export const DECO_CATALOG: PlantInfo[] = [
   },
 ];
 
-// ===== โครงสร้างข้อมูล UserPlant (shared across pages) =====
-export interface UserPlant {
-  id: string | number;
-  username: string;
+// ===== ข้อมูลเซนเซอร์ (ESP32 nodes) =====
+export interface DeviceInfo {
+  id: string;          // ตรงกับ device_id ที่ ESP ส่งขึ้น Firebase
   name: string;
-  sciName?: string;
-  status?: string;
-  statusColor?: string;
-  age?: string;
-  planted?: string;
-  water?: string;
-  image: string;
+  sensors: string[];   // ['temperature', 'humidity', 'lux']
+  description: string;
 }
+
+export const DEVICE_CATALOG: DeviceInfo[] = [
+  {
+    id: 'esp32-sensor-01',
+    name: 'ESP32 #1 (BME680 + BH1750)',
+    sensors: ['temperature', 'humidity', 'lux'],
+    description: 'วัดอุณหภูมิ ความชื้นอากาศ และแสงสว่าง',
+  },
+  {
+    id: 'esp32-sensor-02',
+    name: 'ESP32 #2 (SHT3X + BH1750)',
+    sensors: ['temperature', 'humidity', 'lux'],
+    description: 'วัดอุณหภูมิ ความชื้นอากาศ และแสงสว่าง',
+  },
+];
 
 // ===== โครงสร้างข้อมูล Item =====
 export interface PlantItem {
@@ -151,6 +155,7 @@ export interface PlantItem {
   zone?: string;
   health?: number;
   plantedAt?: string;
+  deviceId?: string;   // device_id ของเซนเซอร์ที่ผูกกับ pot/plot นี้
 }
 
 // ===== แปลง grid coordinate เป็น position 3D =====
@@ -233,11 +238,9 @@ interface AppState {
   // Helper: ตรวจสอบว่า cell นี้ว่างมั้ย
   isCellOccupied: (gridX: number, gridZ: number) => boolean;
 
-  // ===== User Plants (shared between home & plants page) =====
-  userPlants: UserPlant[];
-  setUserPlants: (plants: UserPlant[]) => void;
-  addUserPlant: (plant: UserPlant) => void;
-  loadUserPlants: (username: string) => Promise<void>;}
+  // Helper: หา item ที่ผูกอยู่กับ deviceId นี้ (ใช้กรองตอนเลือกเซนเซอร์)
+  getItemByDeviceId: (deviceId: string) => PlantItem | undefined;
+}
 
 export const useStore = create<AppState>((set, get) => ({
   // ===== Items =====
@@ -315,21 +318,7 @@ export const useStore = create<AppState>((set, get) => ({
       .some((it) => it.gridX === gridX && it.gridZ === gridZ);
   },
 
-  // ===== User Plants =====
-  userPlants: [],
-  setUserPlants: (plants) => set({ userPlants: plants }),
-  addUserPlant: (plant) => set((state) => ({ userPlants: [...state.userPlants, plant] })),
-  loadUserPlants: async (username) => {
-    try {
-      const { data, error } = await supabase
-        .from('plants')
-        .select('*')
-        .eq('username', username)
-        .order('id', { ascending: true });
-      if (error) throw error;
-      set({ userPlants: data ?? [] });
-    } catch {
-      set({ userPlants: [] });
-    }
+  getItemByDeviceId: (deviceId) => {
+    return get().items.find((it) => it.deviceId === deviceId);
   },
 }));

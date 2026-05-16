@@ -1,11 +1,8 @@
 "use client";
 
-import { X, Sprout, Check } from "lucide-react";
+import { X, Sprout, Check, Cpu } from "lucide-react";
 import { useState } from "react";
-import Image from "next/image";
-import { useStore, PLANT_CATALOG, DECO_CATALOG } from "@/store/useStore";
-import type { UserPlant } from "@/store/useStore";
-import { supabase } from "@/lib/supabase";
+import { useStore, PLANT_CATALOG, DECO_CATALOG, DEVICE_CATALOG } from "@/store/useStore";
 
 export default function AddModal() {
   const isOpen = useStore((s) => s.isAddModalOpen);
@@ -15,78 +12,40 @@ export default function AddModal() {
   const updateItem = useStore((s) => s.updateItem);
   const removeItem = useStore((s) => s.removeItem);
   const selectItem = useStore((s) => s.selectItem);
-  const addUserPlant = useStore((s) => s.addUserPlant);
+  const getItemByDeviceId = useStore((s) => s.getItemByDeviceId);
 
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   const pendingItem = items.find((it) => it.id === pendingItemId);
+  const isDeco = pendingItem?.type === 'deco';
 
   if (!isOpen) return null;
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (!pendingItemId || !selectedPlantId) return;
-
-    const catalog = pendingItem?.type === "deco" ? DECO_CATALOG : PLANT_CATALOG;
+    const catalog = isDeco ? DECO_CATALOG : PLANT_CATALOG;
     const plant = catalog.find((p) => p.id === selectedPlantId);
-    if (!plant) return;
-
-    // อัปเดต 3D garden item ตามเดิม
     updateItem(pendingItemId, {
       plantId: selectedPlantId,
-      name: plant.name,
+      name: plant?.name,
       health: 100,
       plantedAt: new Date().toLocaleDateString("th-TH"),
+      deviceId: isDeco ? undefined : (selectedDeviceId ?? undefined),
     });
-    selectItem(pendingItemId);
-
-    // ===== บันทึกลง Supabase (พืชของฉัน) =====
-    if (pendingItem?.type !== "deco") {
-      setIsSaving(true);
-      try {
-        const userStr = localStorage.getItem("current_user");
-        const username = userStr ? JSON.parse(userStr)?.username ?? "guest" : "guest";
-
-        const newPlantData = {
-          username,
-          name: plant.name,
-          sciName: plant.scientificName,
-          status: "สุขภาพดี",
-          statusColor: "bg-green-50 text-green-600 border-green-200",
-          age: "1 วัน",
-          planted: new Date().toLocaleDateString("th-TH", {
-            day: "numeric", month: "short", year: "numeric",
-          }),
-          water: "100%",
-          image: plant.image, // ใช้รูปจาก PLANT_CATALOG
-        };
-
-        const { data, error } = await supabase
-          .from("plants")
-          .insert([newPlantData])
-          .select()
-          .single();
-
-        if (!error && data) {
-          // อัปเดต shared store → BottomPanel & หน้าพืชของฉัน sync ทันที
-          addUserPlant(data as UserPlant);
-        }
-      } catch {
-        // บันทึกไม่สำเร็จ ไม่ block การปลูก 3D
-      } finally {
-        setIsSaving(false);
-      }
-    }
-
+    selectItem(pendingItemId); // เลือก item นั้นเลยจะได้เห็นใน panel
     setSelectedPlantId(null);
+    setSelectedDeviceId(null);
     closeAddModal();
   };
 
   const handleCancel = () => {
+    // ถ้ายกเลิก = ไม่เลือกพืช → ลบ item ที่เพิ่งวางทิ้ง (ทำให้ flow สะอาด)
     if (pendingItemId && pendingItem && !pendingItem.plantId) {
       removeItem(pendingItemId);
     }
     setSelectedPlantId(null);
+    setSelectedDeviceId(null);
     closeAddModal();
   };
 
@@ -101,7 +60,7 @@ export default function AddModal() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-800">
-                {pendingItem?.type === "deco" ? "เลือกของตกแต่ง" : "เลือกพืชมาปลูก"}
+                {pendingItem?.type === 'deco' ? 'เลือกของตกแต่ง' : 'เลือกพืชมาปลูก'}
               </h2>
               {pendingItem && (
                 <p className="text-xs text-gray-500">
@@ -122,34 +81,23 @@ export default function AddModal() {
         {/* Catalog */}
         <div className="flex-1 overflow-y-auto p-5">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {(pendingItem?.type === "deco" ? DECO_CATALOG : PLANT_CATALOG).map((plant) => {
+            {(isDeco ? DECO_CATALOG : PLANT_CATALOG).map((plant) => {
               const isSelected = selectedPlantId === plant.id;
               return (
                 <button
                   key={plant.id}
                   onClick={() => setSelectedPlantId(plant.id)}
-                  className={`relative p-4 rounded-2xl border-2 transition-all text-left ${
-                    isSelected
-                      ? "border-green-500 bg-green-50 shadow-md scale-105"
-                      : "border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50"
-                  }`}
+                  className={`relative p-4 rounded-2xl border-2 transition-all text-left ${isSelected
+                    ? "border-green-500 bg-green-50 shadow-md scale-105"
+                    : "border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50"
+                    }`}
                 >
                   {isSelected && (
                     <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                       <Check className="w-4 h-4 text-white" />
                     </div>
                   )}
-
-                  {/* รูปภาพพืช */}
-                  <div className="w-14 h-14 relative mb-2">
-                    <Image
-                      src={plant.image}
-                      alt={plant.name}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-
+                  <div className="text-4xl mb-2">{plant.emoji}</div>
                   <h3 className="font-bold text-gray-800 text-sm">{plant.name}</h3>
                   <p className="text-xs text-gray-500 italic mt-0.5">{plant.scientificName}</p>
                   <div className="mt-2 flex flex-wrap gap-1">
@@ -164,6 +112,65 @@ export default function AddModal() {
               );
             })}
           </div>
+
+          {/* ===== เลือกเซนเซอร์ (ESP32) — เฉพาะ pot/bed ไม่ใช่ deco ===== */}
+          {!isDeco && (
+            <div className="mt-6 pt-5 border-t border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <Cpu className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-bold text-gray-800">เลือกเซนเซอร์ (ESP32)</h3>
+                <span className="text-[11px] text-gray-400">ไม่บังคับ</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* None option */}
+                <button
+                  onClick={() => setSelectedDeviceId(null)}
+                  className={`relative p-3 rounded-xl border-2 text-left transition-all ${
+                    selectedDeviceId === null
+                      ? "border-emerald-500 bg-emerald-50"
+                      : "border-gray-200 bg-white hover:border-emerald-300"
+                  }`}
+                >
+                  <h4 className="font-bold text-gray-700 text-sm">ไม่ผูกเซนเซอร์</h4>
+                  <p className="text-[11px] text-gray-500 mt-0.5">ใช้ค่าจำลองแทน</p>
+                </button>
+
+                {DEVICE_CATALOG.map((dev) => {
+                  const owner = getItemByDeviceId(dev.id);
+                  const isUsedByOther = !!owner && owner.id !== pendingItemId;
+                  const isSelected = selectedDeviceId === dev.id;
+                  return (
+                    <button
+                      key={dev.id}
+                      onClick={() => !isUsedByOther && setSelectedDeviceId(dev.id)}
+                      disabled={isUsedByOther}
+                      className={`relative p-3 rounded-xl border-2 text-left transition-all ${
+                        isUsedByOther
+                          ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+                          : isSelected
+                          ? "border-emerald-500 bg-emerald-50 shadow-sm"
+                          : "border-gray-200 bg-white hover:border-emerald-300"
+                      }`}
+                    >
+                      {isSelected && !isUsedByOther && (
+                        <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <h4 className="font-bold text-gray-800 text-sm pr-6">{dev.name}</h4>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{dev.description}</p>
+                      {isUsedByOther && (
+                        <p className="text-[10px] text-orange-600 mt-1">
+                          กำลังใช้กับ: {owner?.name || owner?.id}
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -176,15 +183,11 @@ export default function AddModal() {
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!selectedPlantId || isSaving}
+            disabled={!selectedPlantId}
             className="flex-1 py-3 rounded-xl font-bold text-white bg-[#3b8045] hover:bg-[#2d6635] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isSaving ? (
-              <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Sprout className="w-5 h-5" />
-            )}
-            {pendingItem?.type === "deco" ? "วางของตกแต่ง" : "ปลูกพืช"}
+            <Sprout className="w-5 h-5" />
+            {pendingItem?.type === 'deco' ? 'วางของตกแต่ง' : 'ปลูกพืช'}
           </button>
         </div>
       </div>
