@@ -11,7 +11,7 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 flex flex-col gap-4">
-        <div className="flex gap-4 h-[calc(100vh-280px)] min-h-[500px]">
+        <div className="flex gap-4 h-[calc(100vh-320px)] min-h-[500px]">
           {/* Left Sidebar */}
           <div className="w-[280px] shrink-0">
             <Sidebar />
@@ -20,8 +20,6 @@ export default function Home() {
           {/* Main Content Area */}
           <div className="flex-1 bg-white rounded-2xl overflow-hidden relative shadow-sm border border-gray-100">
             <Garden3D />
-            
-
           </div>
 
           {/* Right Panel */}

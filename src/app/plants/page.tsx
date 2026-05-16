@@ -4,15 +4,18 @@ import Navbar from "@/components/organisms/Navbar";
 import Sidebar from "@/components/organisms/Sidebar";
 import { WeatherWidget } from "@/components/molecules/WeatherWidget";
 import Image from "next/image";
-import { Search, Plus, MoreVertical, Droplet, ChevronDown, ChevronLeft, ChevronRight, Download, MoveRight, Save, Lightbulb, Leaf, Activity, AlertTriangle, X } from "lucide-react";
+import { Search, Plus, MoreVertical, Droplet, ChevronDown, ChevronLeft, ChevronRight, MoveRight, Save, Lightbulb, Leaf, AlertTriangle, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useStore } from "@/store/useStore";
+import type { UserPlant } from "@/store/useStore";
 
 export default function PlantsPage() {
-  const [plants, setPlants] = useState<any[]>([]);
+  const { userPlants, setUserPlants, addUserPlant } = useStore();
+  const plants = userPlants;
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newPlantForm, setNewPlantForm] = useState({
     name: "",
@@ -21,11 +24,11 @@ export default function PlantsPage() {
   });
 
   const imageOptions = [
-    { label: "ทิวลิป", value: "/images/flower/Tilip.png" },
-    { label: "กุหลาบ", value: "/images/flower/Rose.png" },
-    { label: "ลาเวนเดอร์", value: "/images/flower/Lavender.png" },
-    { label: "ทานตะวัน", value: "/images/flower/Tantawan.png" },
-    { label: "มะเขือเทศ", value: "/images/vegetable/Tomato.png" },
+    { label: "ทิวลิป",       value: "/images/flower/Tilip.png" },
+    { label: "กุหลาบ",       value: "/images/flower/Rose.png" },
+    { label: "ลาเวนเดอร์",   value: "/images/flower/Lavender.png" },
+    { label: "ทานตะวัน",     value: "/images/flower/Tantawan.png" },
+    { label: "มะเขือเทศ",   value: "/images/vegetable/Tomato.png" },
   ];
 
   useEffect(() => {
@@ -35,7 +38,7 @@ export default function PlantsPage() {
         const user = JSON.parse(userStr);
         setCurrentUser(user);
         fetchPlants(user.username);
-      } catch (e) {
+      } catch {
         setIsLoading(false);
       }
     } else {
@@ -43,32 +46,27 @@ export default function PlantsPage() {
     }
   }, []);
 
+  // ดึงข้อมูลจาก Supabase เท่านั้น
   const fetchPlants = async (username: string) => {
+    setIsLoading(true);
     try {
-      // Try to fetch from Supabase first
-      const { data, error } = await supabase.from('plants').select('*').eq('username', username);
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from("plants")
+        .select("*")
+        .eq("username", username)
+        .order("id", { ascending: true });
 
-      if (data && data.length > 0) {
-        setPlants(data);
-      } else {
-        // If empty, check local storage fallback
-        const localPlants = localStorage.getItem(`gardenverse_plants_${username}`);
-        if (localPlants) {
-          setPlants(JSON.parse(localPlants));
-        }
-      }
-    } catch (error) {
-      console.error("Supabase fetch error, falling back to local storage:", error);
-      const localPlants = localStorage.getItem(`gardenverse_plants_${username}`);
-      if (localPlants) {
-        setPlants(JSON.parse(localPlants));
-      }
+      if (error) throw error;
+      setUserPlants(data ?? []);
+    } catch (err: any) {
+      console.warn("ไม่สามารถดึงข้อมูลพืชจาก Supabase ได้:", err?.message ?? err);
+      setUserPlants([]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // บันทึกลง Supabase เท่านั้น
   const handleAddPlant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
@@ -80,37 +78,34 @@ export default function PlantsPage() {
       status: "สุขภาพดี",
       statusColor: "bg-green-50 text-green-600 border-green-200",
       age: "1 วัน",
-      planted: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+      planted: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }),
       water: "100%",
       image: newPlantForm.image,
     };
 
     try {
-      // Save to Supabase database
-      const { data, error } = await supabase.from('plants').insert([newPlantData]).select();
-      if (error) {
-        console.warn("Could not save to Supabase. Table might not exist.", error);
-      }
+      const { data, error } = await supabase
+        .from("plants")
+        .insert([newPlantData])
+        .select()
+        .single();
 
-      const plantToSave = data && data.length > 0 ? data[0] : { ...newPlantData, id: Date.now() };
+      if (error) throw error;
 
-      const updatedPlants = [...plants, plantToSave];
-      setPlants(updatedPlants);
-
-      // Always save to localStorage as a reliable fallback
-      localStorage.setItem(`gardenverse_plants_${currentUser.username}`, JSON.stringify(updatedPlants));
-
+      // อัปเดต shared store ทันที (BottomPanel sync อัตโนมัติ)
+      addUserPlant(data as UserPlant);
       setIsAddModalOpen(false);
       setNewPlantForm({ name: "", sciName: "", image: "/images/flower/Tilip.png" });
-    } catch (err) {
-      console.error("Failed to add plant:", err);
+    } catch (err: any) {
+      console.error("บันทึกพืชไม่สำเร็จ:", err?.message ?? err);
+      alert("บันทึกไม่สำเร็จ กรุณาตรวจสอบว่าตาราง plants มีใน Supabase แล้ว");
     }
   };
 
   // Stats calculation
   const totalPlants = plants.length;
-  const healthyPlants = plants.filter(p => p.status === "สุขภาพดี").length;
-  const warningPlants = plants.filter(p => p.status === "เฝ้าระวัง").length;
+  const healthyPlants = plants.filter((p) => p.status === "สุขภาพดี").length;
+  const warningPlants = plants.filter((p) => p.status === "เฝ้าระวัง").length;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fa]">
@@ -167,6 +162,7 @@ export default function PlantsPage() {
                 type="text"
                 placeholder="ค้นหาชื่อพืช..."
                 className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:outline-none focus:border-green-300 focus:ring-1 focus:ring-green-300 transition-all"
+                suppressHydrationWarning
               />
             </div>
             <button className="flex items-center justify-between gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 min-w-[130px] hover:bg-gray-50">
@@ -181,8 +177,9 @@ export default function PlantsPage() {
 
           {/* Plant Grid */}
           {isLoading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <div className="w-10 h-10 border-4 border-green-200 border-t-green-600 rounded-full animate-spin" />
+              <p className="text-sm text-gray-400">กำลังโหลดข้อมูลจากฐานข้อมูล...</p>
             </div>
           ) : plants.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
@@ -190,7 +187,9 @@ export default function PlantsPage() {
                 <Leaf className="w-8 h-8 text-green-300" />
               </div>
               <h3 className="text-gray-800 font-bold mb-2">ยังไม่มีพืชในสวนของคุณ</h3>
-              <p className="text-gray-500 text-sm max-w-[300px] mb-6">เริ่มต้นปลูกพืชต้นแรกของคุณ เพื่อดูข้อมูลและติดตามการเจริญเติบโต</p>
+              <p className="text-gray-500 text-sm max-w-[300px] mb-6">
+                เริ่มต้นปลูกพืชต้นแรกของคุณ เพื่อดูข้อมูลและติดตามการเจริญเติบโต
+              </p>
               <button
                 onClick={() => setIsAddModalOpen(true)}
                 className="flex items-center gap-2 bg-white border border-green-200 text-green-600 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-green-50 transition-colors shadow-sm"
@@ -221,7 +220,7 @@ export default function PlantsPage() {
                   </div>
                   <p className="text-xs text-gray-400 italic mb-3">{plant.sciName}</p>
 
-                  <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit border ${plant.statusColor || 'bg-green-50 text-green-600 border-green-200'} mb-4`}>
+                  <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit border ${plant.statusColor || "bg-green-50 text-green-600 border-green-200"} mb-4`}>
                     {plant.status || "สุขภาพดี"}
                   </div>
 
@@ -277,17 +276,15 @@ export default function PlantsPage() {
                 <span className="text-[11px] text-gray-500 font-medium">ชนิดพืช</span>
               </div>
               <div className="bg-gray-50 rounded-xl p-3 flex flex-col items-center justify-center gap-1 border border-gray-100">
-                <div className="flex mb-1 relative">
-                  <Leaf className="w-4 h-4 text-green-500 absolute -left-2" />
-                  <Leaf className="w-5 h-5 text-green-600" />
-                  <Leaf className="w-4 h-4 text-green-500 absolute -right-2" />
-                </div>
-                <span className="text-lg font-bold text-gray-800 mt-1">{totalPlants}</span>
+                <Leaf className="w-5 h-5 text-green-600 mb-1" />
+                <span className="text-lg font-bold text-gray-800">{totalPlants}</span>
                 <span className="text-[11px] text-gray-500 font-medium">ต้นทั้งหมด</span>
               </div>
               <div className="bg-green-50/50 rounded-xl p-3 flex flex-col items-center justify-center gap-1 border border-green-100">
                 <div className="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center mb-1">
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
                 <span className="text-lg font-bold text-gray-800">{healthyPlants}</span>
                 <span className="text-[11px] text-gray-500 font-medium">สุขภาพดี</span>
@@ -362,6 +359,7 @@ export default function PlantsPage() {
                   onChange={(e) => setNewPlantForm({ ...newPlantForm, name: e.target.value })}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="เช่น ทิวลิป, มะเขือเทศ"
+                  suppressHydrationWarning
                 />
               </div>
 
@@ -373,6 +371,7 @@ export default function PlantsPage() {
                   onChange={(e) => setNewPlantForm({ ...newPlantForm, sciName: e.target.value })}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-sm italic"
                   placeholder="เช่น Tulipa spp."
+                  suppressHydrationWarning
                 />
               </div>
 
@@ -384,10 +383,11 @@ export default function PlantsPage() {
                       key={opt.value}
                       type="button"
                       onClick={() => setNewPlantForm({ ...newPlantForm, image: opt.value })}
-                      className={`p-2 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${newPlantForm.image === opt.value
-                          ? 'border-green-500 bg-green-50'
-                          : 'border-transparent hover:bg-gray-50'
-                        }`}
+                      className={`p-2 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${
+                        newPlantForm.image === opt.value
+                          ? "border-green-500 bg-green-50"
+                          : "border-transparent hover:bg-gray-50"
+                      }`}
                     >
                       <Image src={opt.value} alt={opt.label} width={40} height={40} className="object-contain" />
                     </button>

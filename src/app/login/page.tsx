@@ -122,6 +122,7 @@ export default function LoginPage() {
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
                   placeholder="johndoe"
                   required={!isLogin}
+                  suppressHydrationWarning
                 />
               </div>
             </div>
@@ -144,6 +145,7 @@ export default function LoginPage() {
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
                   placeholder="Username หรือ Email"
                   required
+                  suppressHydrationWarning
                 />
               </div>
             </div>
@@ -164,6 +166,7 @@ export default function LoginPage() {
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
                   placeholder="you@example.com"
                   required={!isLogin}
+                  suppressHydrationWarning
                 />
               </div>
             </div>
@@ -192,6 +195,7 @@ export default function LoginPage() {
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
                 placeholder="••••••••"
                 required
+                suppressHydrationWarning
               />
             </div>
           </div>

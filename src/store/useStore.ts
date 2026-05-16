@@ -1,4 +1,9 @@
 import { create } from 'zustand';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ===== ค่าคงที่สำหรับ Grid System =====
 export const GRID_SIZE = 10;        // 10x10 blocks
@@ -118,6 +123,20 @@ export const DECO_CATALOG: PlantInfo[] = [
   },
 ];
 
+// ===== โครงสร้างข้อมูล UserPlant (shared across pages) =====
+export interface UserPlant {
+  id: string | number;
+  username: string;
+  name: string;
+  sciName?: string;
+  status?: string;
+  statusColor?: string;
+  age?: string;
+  planted?: string;
+  water?: string;
+  image: string;
+}
+
 // ===== โครงสร้างข้อมูล Item =====
 export interface PlantItem {
   id: string;
@@ -213,7 +232,12 @@ interface AppState {
 
   // Helper: ตรวจสอบว่า cell นี้ว่างมั้ย
   isCellOccupied: (gridX: number, gridZ: number) => boolean;
-}
+
+  // ===== User Plants (shared between home & plants page) =====
+  userPlants: UserPlant[];
+  setUserPlants: (plants: UserPlant[]) => void;
+  addUserPlant: (plant: UserPlant) => void;
+  loadUserPlants: (username: string) => Promise<void>;}
 
 export const useStore = create<AppState>((set, get) => ({
   // ===== Items =====
@@ -289,5 +313,23 @@ export const useStore = create<AppState>((set, get) => ({
     return items
       .filter(it => it.plotId === selectedPlotId)
       .some((it) => it.gridX === gridX && it.gridZ === gridZ);
+  },
+
+  // ===== User Plants =====
+  userPlants: [],
+  setUserPlants: (plants) => set({ userPlants: plants }),
+  addUserPlant: (plant) => set((state) => ({ userPlants: [...state.userPlants, plant] })),
+  loadUserPlants: async (username) => {
+    try {
+      const { data, error } = await supabase
+        .from('plants')
+        .select('*')
+        .eq('username', username)
+        .order('id', { ascending: true });
+      if (error) throw error;
+      set({ userPlants: data ?? [] });
+    } catch {
+      set({ userPlants: [] });
+    }
   },
 }));

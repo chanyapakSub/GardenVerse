@@ -1,12 +1,191 @@
 "use client";
 
-import { Bell, Droplet, Coins, LogOut, Settings } from "lucide-react";
+import { Bell, Droplet, Coins, LogOut, Settings, Lightbulb, Droplets, Leaf, X, CheckCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SettingsModal from "./SettingsModal";
 
+// ===== ข้อมูลการแจ้งเตือน =====
+const INITIAL_ALERTS = [
+  {
+    id: 1,
+    icon: Lightbulb,
+    iconBg: "bg-yellow-50",
+    iconColor: "text-yellow-500",
+    ringColor: "ring-yellow-200",
+    title: "อุณหภูมิเพิ่มสูงขึ้น",
+    desc: "อุณหภูมิวันนี้สูงกว่าค่าเฉลี่ยเล็กน้อย แนะนำให้เพิ่มการระบายอากาศ",
+    time: "09:30",
+    read: false,
+  },
+  {
+    id: 2,
+    icon: Droplets,
+    iconBg: "bg-blue-50",
+    iconColor: "text-blue-500",
+    ringColor: "ring-blue-200",
+    title: "ความชื้นอากาศต่ำกว่าปกติ",
+    desc: "ความชื้นอากาศเหลือ 35% แนะนำให้เพิ่มการพ่นหมอก",
+    time: "เมื่อวาน 17:00",
+    read: false,
+  },
+  {
+    id: 3,
+    icon: Leaf,
+    iconBg: "bg-green-50",
+    iconColor: "text-green-600",
+    ringColor: "ring-green-200",
+    title: "พืชกำลังเจริญเติบโตดี",
+    desc: "สุขภาพพืชดีขึ้น 5% จากสัปดาห์ที่ผ่านมา",
+    time: "2 พ.ค. 2567",
+    read: false,
+  },
+];
+
+// ===== Notification Bell Component =====
+function NotificationBell() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [alerts, setAlerts] = useState(INITIAL_ALERTS);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = alerts.filter((a) => !a.read).length;
+
+  // ปิด dropdown เมื่อคลิกนอก
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  const markAllRead = () => {
+    setAlerts((prev) => prev.map((a) => ({ ...a, read: true })));
+  };
+
+  const markOneRead = (id: number) => {
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, read: true } : a)));
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {/* Bell Button */}
+      <button
+        id="notification-bell-btn"
+        onClick={() => setIsOpen((v) => !v)}
+        className={`relative p-2 rounded-xl transition-all ${
+          isOpen ? "bg-green-50 text-green-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+        }`}
+      >
+        <Bell className="w-5 h-5" />
+        {unreadCount > 0 && (
+          <>
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+            <span className="absolute -top-0.5 -right-0.5 text-[10px] bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center font-bold leading-none">
+              {unreadCount}
+            </span>
+          </>
+        )}
+      </button>
+
+      {/* Dropdown Panel */}
+      {isOpen && (
+        <div
+          className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-[100]"
+          style={{ animation: "notifSlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both" }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/60">
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-gray-600" />
+              <span className="font-bold text-gray-800 text-sm">การแจ้งเตือน</span>
+              {unreadCount > 0 && (
+                <span className="text-[10px] bg-red-500 text-white rounded-full px-1.5 py-0.5 font-semibold">
+                  {unreadCount} ใหม่
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllRead}
+                  className="flex items-center gap-1 text-[11px] text-green-600 hover:text-green-700 font-semibold px-2 py-1 rounded-lg hover:bg-green-50 transition-colors"
+                >
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  อ่านทั้งหมด
+                </button>
+              )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Alert List */}
+          <div className="flex flex-col max-h-72 overflow-y-auto">
+            {alerts.map((alert) => {
+              const Icon = alert.icon;
+              return (
+                <button
+                  key={alert.id}
+                  onClick={() => markOneRead(alert.id)}
+                  className={`flex gap-3 px-4 py-3 text-left transition-colors border-b border-gray-50 last:border-0 w-full ${
+                    alert.read ? "bg-white hover:bg-gray-50" : "bg-blue-50/30 hover:bg-blue-50/60"
+                  }`}
+                >
+                  <div
+                    className={`w-9 h-9 rounded-full ${alert.iconBg} ring-1 ${alert.ringColor} flex items-center justify-center shrink-0 mt-0.5`}
+                  >
+                    <Icon className={`w-4 h-4 ${alert.iconColor}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className={`text-sm font-semibold leading-tight ${alert.read ? "text-gray-600" : "text-gray-900"}`}>
+                        {alert.title}
+                      </span>
+                      {!alert.read && (
+                        <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1.5" />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{alert.desc}</p>
+                    <span className="text-[10px] text-gray-400 mt-1 block">{alert.time}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/40">
+            <Link
+              href="/notifications"
+              onClick={() => setIsOpen(false)}
+              className="block w-full text-center text-xs font-semibold text-green-600 hover:text-green-700 transition-colors py-1 hover:underline"
+            >
+              ดูการแจ้งเตือนทั้งหมด →
+            </Link>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes notifSlideIn {
+          from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0)    scale(1);    }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ===== Main Navbar =====
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -25,8 +204,6 @@ export default function Navbar() {
         // Ignore JSON parse errors
       }
     }
-
-    // Load and apply theme
     const savedTheme = localStorage.getItem("gardenverse_theme");
     if (savedTheme) {
       document.documentElement.setAttribute("data-theme", savedTheme);
@@ -34,7 +211,6 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    // Clear the simulated auth cookie and user info
     document.cookie = "is_authenticated=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     localStorage.removeItem("current_user");
     router.push("/login");
@@ -53,16 +229,10 @@ export default function Navbar() {
   return (
     <>
       <nav className="bg-white px-6 py-3 flex items-center justify-between border-b border-gray-100 shadow-sm sticky top-0 z-50">
-        {/* Left section: Logo */}
+        {/* Left: Logo */}
         <div className="flex items-center gap-2 w-[240px]">
           <div className="flex items-center justify-center">
-            <Image
-              src="/images/logo_main.png"
-              alt="GardenVerse Logo"
-              width={48}
-              height={48}
-              className="object-contain"
-            />
+            <Image src="/images/logo_main.png" alt="GardenVerse Logo" width={48} height={48} className="object-contain" />
           </div>
           <div>
             <h1 className="font-bold text-gray-800 leading-tight">GardenVerse</h1>
@@ -70,16 +240,30 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Middle section: Links */}
+        {/* Middle: Nav Links */}
         <div className="flex items-center gap-8 text-[15px] font-medium h-full">
-          <Link href="/home" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/home" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>สวนของฉัน</Link>
-          <Link href="/plants" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/plants" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>พืชของฉัน</Link>
-          <Link href="/history" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/history" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>ประวัติการดูแล</Link>
-          <Link href="/disease-detect" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/disease-detect" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>AI ตรวจโรคพืช</Link>
-          <Link href="/shop" className={`h-[52px] flex items-center border-b-2 transition-colors ${pathname === "/shop" ? "text-green-600 border-green-600" : "text-gray-500 border-transparent hover:text-green-600"}`}>ร้านค้า</Link>
+          {[
+            { href: "/home",          label: "สวนของฉัน" },
+            { href: "/plants",        label: "พืชของฉัน" },
+            { href: "/history",       label: "ประวัติการดูแล" },
+            { href: "/disease-detect",label: "AI ตรวจโรคพืช" },
+            { href: "/shop",          label: "ร้านค้า" },
+          ].map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`h-[52px] flex items-center border-b-2 transition-colors ${
+                pathname === href
+                  ? "text-green-600 border-green-600"
+                  : "text-gray-500 border-transparent hover:text-green-600"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
         </div>
 
-        {/* Right section: Stats & Profile */}
+        {/* Right: Stats & Profile */}
         <div className="flex items-center gap-4 w-[240px] justify-end">
           {/* Stats Pills */}
           <div className="flex items-center gap-3">
@@ -93,25 +277,14 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Notifications */}
-          <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            <span className="absolute top-0 right-0 -mr-1 -mt-1 text-[10px] bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center">3</span>
-          </button>
+          {/* Notification Bell */}
+          <NotificationBell />
 
-          {/* Profile */}
+          {/* Profile Dropdown */}
           <div className="flex items-center gap-2 cursor-pointer relative group">
             <div className="w-9 h-9 rounded-full bg-indigo-100 overflow-hidden border-2 border-white shadow-sm relative">
-              <Image
-                src={profileImage}
-                alt="User"
-                fill
-                className="object-cover"
-              />
+              <Image src={profileImage} alt="User" fill className="object-cover" />
             </div>
-
-            {/* Dropdown Menu */}
             <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all w-52 overflow-hidden z-50">
               <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
                 <span className="text-[11px] text-gray-500 block uppercase tracking-wider font-semibold mb-0.5">บัญชีผู้ใช้</span>

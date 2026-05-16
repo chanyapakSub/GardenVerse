@@ -1,16 +1,27 @@
 "use client";
 
 import { Wind, Plus, ShieldCheck, Gift } from "lucide-react";
-import { myPlants } from "@/lib/mockData";
 import Image from "next/image";
 import { useStore } from "@/store/useStore";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useState } from "react";
 import { WeatherWidget } from "@/components/molecules/WeatherWidget";
 
 export default function BottomPanel() {
-  const { openAddModal } = useStore();
+  const { openAddModal, userPlants, loadUserPlants } = useStore();
   const [temperature, setTemperature] = useState<number>(32);
   const [humidity, setHumidity] = useState<number>(60);
+
+  // Load user plants from Supabase on mount
+  useEffect(() => {
+    const userStr = localStorage.getItem("current_user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.username) loadUserPlants(user.username); // async Supabase fetch
+      } catch {}
+    }
+  }, [loadUserPlants]);
 
   useEffect(() => {
     const fetchSensorData = async () => {
@@ -25,8 +36,8 @@ export default function BottomPanel() {
             setHumidity(latestReading.humidity);
           }
         }
-      } catch (error) {
-        console.error("Error fetching sensor data:", error);
+      } catch {
+        // Keep default values on error
       }
     };
 
@@ -36,7 +47,7 @@ export default function BottomPanel() {
   }, []);
 
   return (
-    <div className="flex gap-4 h-[140px] shrink-0">
+    <div className="flex gap-4 h-[180px] shrink-0">
       
       {/* Weather Card */}
       <div className="w-[200px] shrink-0 flex">
@@ -45,31 +56,37 @@ export default function BottomPanel() {
 
       {/* Plants Scroll List */}
       <div className="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col">
-        <h3 className="text-[14px] font-bold text-gray-800 mb-3">พืชในสวนของคุณ (12)</h3>
+        <h3 className="text-[14px] font-bold text-gray-800 mb-3">
+          พืชในสวนของคุณ ({userPlants.length})
+        </h3>
         
         <div className="flex gap-1 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1 -mx-1 items-center">
-          {myPlants.map((plant) => (
-            <div 
-              key={plant.id} 
-              className={`flex flex-col items-center gap-2 min-w-[80px] shrink-0 p-2 rounded-xl border transition-colors ${
-                plant.active ? "bg-green-50/80 border-green-200 shadow-sm" : "border-transparent hover:bg-gray-50"
-              }`}
-            >
-              <div className="w-14 h-14 relative rounded-full overflow-hidden shadow-sm border border-gray-100 bg-white">
-                <Image 
-                  src={plant.img} 
-                  alt={plant.name}
-                  fill
-                  className="object-contain p-1"
-                />
+          {userPlants.length === 0 ? (
+            <p className="text-sm text-gray-400 italic px-2">ยังไม่มีพืช กดปุ่ม + เพื่อเพิ่ม</p>
+          ) : (
+            userPlants.map((plant, i) => (
+              <div
+                key={plant.id}
+                className={`flex flex-col items-center gap-2 min-w-[80px] shrink-0 p-2 rounded-xl border transition-colors ${
+                  i === 0 ? "bg-green-50/80 border-green-200 shadow-sm" : "border-transparent hover:bg-gray-50"
+                }`}
+              >
+                <div className="w-14 h-14 relative rounded-full overflow-hidden shadow-sm border border-gray-100 bg-white">
+                  <Image
+                    src={plant.image}
+                    alt={plant.name}
+                    fill
+                    className="object-contain p-1"
+                  />
+                </div>
+                <span className={`text-[12px] font-medium ${i === 0 ? "text-green-700 font-bold" : "text-gray-600"}`}>
+                  {plant.name}
+                </span>
               </div>
-              <span className={`text-[12px] font-medium ${plant.active ? "text-green-700 font-bold" : "text-gray-600"}`}>
-                {plant.name}
-              </span>
-            </div>
-          ))}
+            ))
+          )}
           
-          <button 
+          <button
             onClick={() => openAddModal()}
             className="flex flex-col items-center justify-center gap-2 min-w-[80px] shrink-0 p-2 opacity-70 hover:opacity-100 transition-opacity"
           >
