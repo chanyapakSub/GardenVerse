@@ -8,20 +8,23 @@ import { useState } from "react";
 import { WeatherWidget } from "@/components/molecules/WeatherWidget";
 
 export default function BottomPanel() {
-  const { openAddModal, userPlants, loadUserPlants } = useStore();
+  const { openAddModal, userPlants, loadUserPlants, loadGardenItems } = useStore();
   const [temperature, setTemperature] = useState<number>(32);
   const [humidity, setHumidity] = useState<number>(60);
 
-  // Load user plants from Supabase on mount
+  // Load user plants + garden items (กระถาง/แปลงที่วางในสวน) จาก Supabase
   useEffect(() => {
     const userStr = localStorage.getItem("current_user");
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
-        if (user.username) loadUserPlants(user.username); // async Supabase fetch
+        if (user.username) {
+          loadUserPlants(user.username);
+          loadGardenItems(user.username);
+        }
       } catch {}
     }
-  }, [loadUserPlants]);
+  }, [loadUserPlants, loadGardenItems]);
 
   useEffect(() => {
     const fetchSensorData = async () => {

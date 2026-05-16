@@ -15,10 +15,7 @@ export default function HistoryPage() {
         <div className="flex gap-4 h-full">
           {/* Left Sidebar */}
           <div className="w-[280px] shrink-0">
-            <Sidebar
-              onPlantClick={(id) => setSelectedPlantId(id)}
-              selectedPlantId={selectedPlantId}
-            />
+            <Sidebar onPlantClick={(id) => setSelectedPlantId(id)} />
           </div>
 
           {/* Main Content */}

@@ -217,13 +217,9 @@ export default function PlantDetailPanel() {
             fill
             className="object-cover object-top"
             onError={(e) => {
-              // fallback ถ้าโหลดรูปไม่ได้
               (e.target as HTMLImageElement).style.display = "none";
             }}
           />
-          <div className="absolute inset-0 flex items-center justify-center text-4xl">
-            {plant.emoji}
-          </div>
         </div>
       </div>
 

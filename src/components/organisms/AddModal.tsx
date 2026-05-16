@@ -1,24 +1,33 @@
 "use client";
 
-import { X, Sprout, Check, Cpu } from "lucide-react";
-import { useState } from "react";
+import { X, Sprout, Check, Cpu, Leaf } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useStore, PLANT_CATALOG, DECO_CATALOG, DEVICE_CATALOG } from "@/store/useStore";
 
 export default function AddModal() {
   const isOpen = useStore((s) => s.isAddModalOpen);
   const pendingItemId = useStore((s) => s.pendingItemId);
   const items = useStore((s) => s.items);
+  const userPlants = useStore((s) => s.userPlants);
   const closeAddModal = useStore((s) => s.closeAddModal);
   const updateItem = useStore((s) => s.updateItem);
   const removeItem = useStore((s) => s.removeItem);
   const selectItem = useStore((s) => s.selectItem);
-  const getItemByDeviceId = useStore((s) => s.getItemByDeviceId);
+  const openAddPlantModal = useStore((s) => s.openAddPlantModal);
 
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   const pendingItem = items.find((it) => it.id === pendingItemId);
   const isDeco = pendingItem?.type === 'deco';
+
+  // เลือกพืชปลูกได้เฉพาะที่ผู้ใช้เพิ่มไว้แล้วใน "พืชของฉัน" (match ด้วยชื่อ)
+  // ถ้าเป็นของตกแต่ง (deco) ให้ใช้ DECO_CATALOG เต็มเหมือนเดิม
+  const availableCatalog = useMemo(() => {
+    if (isDeco) return DECO_CATALOG;
+    const ownedNames = new Set(userPlants.map((p) => p.name));
+    return PLANT_CATALOG.filter((p) => ownedNames.has(p.name));
+  }, [isDeco, userPlants]);
 
   if (!isOpen) return null;
 
@@ -80,38 +89,60 @@ export default function AddModal() {
 
         {/* Catalog */}
         <div className="flex-1 overflow-y-auto p-5">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {(isDeco ? DECO_CATALOG : PLANT_CATALOG).map((plant) => {
-              const isSelected = selectedPlantId === plant.id;
-              return (
-                <button
-                  key={plant.id}
-                  onClick={() => setSelectedPlantId(plant.id)}
-                  className={`relative p-4 rounded-2xl border-2 transition-all text-left ${isSelected
-                    ? "border-green-500 bg-green-50 shadow-md scale-105"
-                    : "border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50"
-                    }`}
-                >
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-white" />
+          {!isDeco && availableCatalog.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center py-10 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm">
+                <Leaf className="w-7 h-7 text-green-300" />
+              </div>
+              <h3 className="text-gray-800 font-bold text-sm mb-1">ยังไม่มีพืชให้ปลูก</h3>
+              <p className="text-xs text-gray-500 leading-relaxed max-w-[320px] mb-4">
+                ต้องเพิ่มพืชเข้า &quot;พืชของฉัน&quot; ก่อน ระบบจะให้เลือกมาปลูกได้เฉพาะพืชที่คุณมี
+              </p>
+              <button
+                onClick={() => {
+                  handleCancel();
+                  openAddPlantModal();
+                }}
+                className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-green-700 transition-colors"
+              >
+                <Sprout className="w-4 h-4" />
+                ไปเพิ่มพืช
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {availableCatalog.map((plant) => {
+                const isSelected = selectedPlantId === plant.id;
+                return (
+                  <button
+                    key={plant.id}
+                    onClick={() => setSelectedPlantId(plant.id)}
+                    className={`relative p-4 rounded-2xl border-2 transition-all text-left ${isSelected
+                      ? "border-green-500 bg-green-50 shadow-md scale-105"
+                      : "border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50"
+                      }`}
+                  >
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <Check className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+                    <div className="text-4xl mb-2">{plant.emoji}</div>
+                    <h3 className="font-bold text-gray-800 text-sm">{plant.name}</h3>
+                    <p className="text-xs text-gray-500 italic mt-0.5">{plant.scientificName}</p>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">
+                        ☀️ {plant.sunlight}
+                      </span>
+                      <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                        💧 {plant.water}
+                      </span>
                     </div>
-                  )}
-                  <div className="text-4xl mb-2">{plant.emoji}</div>
-                  <h3 className="font-bold text-gray-800 text-sm">{plant.name}</h3>
-                  <p className="text-xs text-gray-500 italic mt-0.5">{plant.scientificName}</p>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">
-                      ☀️ {plant.sunlight}
-                    </span>
-                    <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-                      💧 {plant.water}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* ===== เลือกเซนเซอร์ (ESP32) — เฉพาะ pot/bed ไม่ใช่ deco ===== */}
           {!isDeco && (
@@ -137,34 +168,24 @@ export default function AddModal() {
                 </button>
 
                 {DEVICE_CATALOG.map((dev) => {
-                  const owner = getItemByDeviceId(dev.id);
-                  const isUsedByOther = !!owner && owner.id !== pendingItemId;
                   const isSelected = selectedDeviceId === dev.id;
                   return (
                     <button
                       key={dev.id}
-                      onClick={() => !isUsedByOther && setSelectedDeviceId(dev.id)}
-                      disabled={isUsedByOther}
+                      onClick={() => setSelectedDeviceId(dev.id)}
                       className={`relative p-3 rounded-xl border-2 text-left transition-all ${
-                        isUsedByOther
-                          ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
-                          : isSelected
+                        isSelected
                           ? "border-emerald-500 bg-emerald-50 shadow-sm"
                           : "border-gray-200 bg-white hover:border-emerald-300"
                       }`}
                     >
-                      {isSelected && !isUsedByOther && (
+                      {isSelected && (
                         <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
                           <Check className="w-3 h-3 text-white" />
                         </div>
                       )}
                       <h4 className="font-bold text-gray-800 text-sm pr-6">{dev.name}</h4>
                       <p className="text-[11px] text-gray-500 mt-0.5">{dev.description}</p>
-                      {isUsedByOther && (
-                        <p className="text-[10px] text-orange-600 mt-1">
-                          กำลังใช้กับ: {owner?.name || owner?.id}
-                        </p>
-                      )}
                     </button>
                   );
                 })}

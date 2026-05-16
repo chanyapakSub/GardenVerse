@@ -188,6 +188,18 @@ export interface UserPlant {
   image: string;
 }
 
+// ===== โรงเรือน / แปลง (สร้างเอง ตั้งชื่อเอง) =====
+export interface Greenhouse {
+  id: string;
+  name: string;
+}
+
+export interface Plot {
+  id: string;
+  greenhouseId: string;
+  name: string;
+}
+
 // ===== Store =====
 interface AppState {
   // Items
@@ -266,19 +278,95 @@ interface AppState {
   setUserPlants: (plants: UserPlant[]) => void;
   addUserPlant: (plant: UserPlant) => void;
   loadUserPlants: (username: string) => Promise<void>;
+
+  // ===== Garden items persistence =====
+  loadGardenItems: (username: string) => Promise<void>;
+
+  // ===== Greenhouses & Plots (user-managed) =====
+  greenhouses: Greenhouse[];
+  plots: Plot[];
+  loadGreenhouses: (username: string) => Promise<void>;
+  loadPlots: (username: string) => Promise<void>;
+  addGreenhouse: (name: string) => Promise<Greenhouse | null>;
+  renameGreenhouse: (id: string, name: string) => Promise<void>;
+  removeGreenhouse: (id: string) => Promise<void>;
+  addPlot: (greenhouseId: string, name: string) => Promise<Plot | null>;
+  renamePlot: (id: string, name: string) => Promise<void>;
+  removePlot: (id: string) => Promise<void>;
+  movePlot: (id: string, newGreenhouseId: string) => Promise<void>;
+}
+
+// ===== Persistence helpers (garden_items) =====
+function currentUsername(): string | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window.localStorage.getItem('current_user');
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw)?.username ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// แปลง PlantItem → row พร้อม username สำหรับ upsert
+function toItemRow(item: PlantItem, username: string) {
+  return {
+    id: item.id,
+    username,
+    type: item.type,
+    plantId: item.plantId,
+    gridX: item.gridX,
+    gridZ: item.gridZ,
+    plotId: item.plotId,
+    name: item.name ?? null,
+    zone: item.zone ?? null,
+    health: item.health ?? null,
+    plantedAt: item.plantedAt ?? null,
+    deviceId: item.deviceId ?? null,
+  };
+}
+
+async function persistItem(item: PlantItem) {
+  const username = currentUsername();
+  if (!username) return;
+  const { error } = await supabase
+    .from('garden_items')
+    .upsert(toItemRow(item, username), { onConflict: 'id' });
+  if (error) console.warn('persistItem failed:', error.message);
+}
+
+async function deleteItem(id: string) {
+  const username = currentUsername();
+  if (!username) return;
+  const { error } = await supabase
+    .from('garden_items')
+    .delete()
+    .eq('id', id)
+    .eq('username', username);
+  if (error) console.warn('deleteItem failed:', error.message);
 }
 
 export const useStore = create<AppState>((set, get) => ({
   // ===== Items =====
   items: [],
-  addItem: (item) => set((state) => ({ items: [...state.items, item] })),
-  updateItem: (id, updates) => set((state) => ({
-    items: state.items.map((it) => (it.id === id ? { ...it, ...updates } : it)),
-  })),
-  removeItem: (id) => set((state) => ({
-    items: state.items.filter((it) => it.id !== id),
-    selectedItemId: state.selectedItemId === id ? null : state.selectedItemId,
-  })),
+  addItem: (item) => {
+    set((state) => ({ items: [...state.items, item] }));
+    void persistItem(item); // fire-and-forget
+  },
+  updateItem: (id, updates) => {
+    set((state) => ({
+      items: state.items.map((it) => (it.id === id ? { ...it, ...updates } : it)),
+    }));
+    const updated = get().items.find((it) => it.id === id);
+    if (updated) void persistItem(updated);
+  },
+  removeItem: (id) => {
+    set((state) => ({
+      items: state.items.filter((it) => it.id !== id),
+      selectedItemId: state.selectedItemId === id ? null : state.selectedItemId,
+    }));
+    void deleteItem(id);
+  },
 
   // ===== Selection =====
   selectedItemId: null,
@@ -314,7 +402,8 @@ export const useStore = create<AppState>((set, get) => ({
   setAnimatingItemId: (id) => set({ animatingItemId: id }),
 
   // ===== Plot Selection =====
-  selectedPlotId: 'p1', // Default to Tulip plot
+  // ค่าเริ่มต้นเป็น null — ตอนยังไม่มีพืชในสวนจะไม่มีแปลงให้เลือก
+  selectedPlotId: null,
   setSelectedPlotId: (id) => set({
     selectedPlotId: id,
     selectedItemId: null,
@@ -369,5 +458,143 @@ export const useStore = create<AppState>((set, get) => ({
     } catch {
       set({ userPlants: [] });
     }
+  },
+
+  // ===== Garden items (pots/beds/decos) persistence =====
+  loadGardenItems: async (username) => {
+    try {
+      const { data, error } = await supabase
+        .from('garden_items')
+        .select('*')
+        .eq('username', username)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      const items: PlantItem[] = (data ?? []).map((row) => ({
+        id: row.id,
+        type: row.type,
+        plantId: row.plantId ?? null,
+        gridX: row.gridX,
+        gridZ: row.gridZ,
+        plotId: row.plotId,
+        name: row.name ?? undefined,
+        zone: row.zone ?? undefined,
+        health: row.health ?? undefined,
+        plantedAt: row.plantedAt ?? undefined,
+        deviceId: row.deviceId ?? undefined,
+      }));
+      set({ items });
+    } catch {
+      set({ items: [] });
+    }
+  },
+
+  // ===== Greenhouses & Plots =====
+  greenhouses: [],
+  plots: [],
+  loadGreenhouses: async (username) => {
+    try {
+      const { data, error } = await supabase
+        .from('greenhouses')
+        .select('id, name')
+        .eq('username', username)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      set({ greenhouses: data ?? [] });
+    } catch {
+      set({ greenhouses: [] });
+    }
+  },
+  loadPlots: async (username) => {
+    try {
+      const { data, error } = await supabase
+        .from('plots')
+        .select('id, name, greenhouseId')
+        .eq('username', username)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      set({ plots: data ?? [] });
+    } catch {
+      set({ plots: [] });
+    }
+  },
+  addGreenhouse: async (name) => {
+    const username = currentUsername();
+    if (!username) return null;
+    const id = `gh_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const row = { id, username, name };
+    const { error } = await supabase.from('greenhouses').insert(row);
+    if (error) { console.warn('addGreenhouse failed:', error.message); return null; }
+    const gh: Greenhouse = { id, name };
+    set((state) => ({ greenhouses: [...state.greenhouses, gh] }));
+    return gh;
+  },
+  renameGreenhouse: async (id, name) => {
+    set((state) => ({
+      greenhouses: state.greenhouses.map((g) => (g.id === id ? { ...g, name } : g)),
+    }));
+    const { error } = await supabase.from('greenhouses').update({ name }).eq('id', id);
+    if (error) console.warn('renameGreenhouse failed:', error.message);
+  },
+  removeGreenhouse: async (id) => {
+    // cascade: ลบ items ที่ plotId อยู่ใน greenhouse นี้ → ลบ plots → ลบ greenhouse
+    const { plots, items, selectedPlotId } = get();
+    const plotIdsInGreenhouse = plots.filter((p) => p.greenhouseId === id).map((p) => p.id);
+
+    set({
+      items: items.filter((it) => !plotIdsInGreenhouse.includes(it.plotId)),
+      plots: plots.filter((p) => p.greenhouseId !== id),
+      greenhouses: get().greenhouses.filter((g) => g.id !== id),
+      selectedPlotId: plotIdsInGreenhouse.includes(selectedPlotId ?? '') ? null : selectedPlotId,
+      selectedItemId: null,
+    });
+
+    if (plotIdsInGreenhouse.length > 0) {
+      await supabase.from('garden_items').delete().in('plotId', plotIdsInGreenhouse);
+      await supabase.from('plots').delete().eq('greenhouseId', id);
+    }
+    const { error } = await supabase.from('greenhouses').delete().eq('id', id);
+    if (error) console.warn('removeGreenhouse failed:', error.message);
+  },
+  addPlot: async (greenhouseId, name) => {
+    const username = currentUsername();
+    if (!username) return null;
+    const id = `plot_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const row = { id, username, greenhouseId, name };
+    const { error } = await supabase.from('plots').insert(row);
+    if (error) { console.warn('addPlot failed:', error.message); return null; }
+    const plot: Plot = { id, greenhouseId, name };
+    set((state) => ({ plots: [...state.plots, plot] }));
+    return plot;
+  },
+  renamePlot: async (id, name) => {
+    set((state) => ({
+      plots: state.plots.map((p) => (p.id === id ? { ...p, name } : p)),
+    }));
+    const { error } = await supabase.from('plots').update({ name }).eq('id', id);
+    if (error) console.warn('renamePlot failed:', error.message);
+  },
+  removePlot: async (id) => {
+    const { items, selectedPlotId } = get();
+    set({
+      items: items.filter((it) => it.plotId !== id),
+      plots: get().plots.filter((p) => p.id !== id),
+      selectedPlotId: selectedPlotId === id ? null : selectedPlotId,
+      selectedItemId: null,
+    });
+    await supabase.from('garden_items').delete().eq('plotId', id);
+    const { error } = await supabase.from('plots').delete().eq('id', id);
+    if (error) console.warn('removePlot failed:', error.message);
+  },
+  movePlot: async (id, newGreenhouseId) => {
+    set((state) => ({
+      plots: state.plots.map((p) =>
+        p.id === id ? { ...p, greenhouseId: newGreenhouseId } : p
+      ),
+    }));
+    const { error } = await supabase
+      .from('plots')
+      .update({ greenhouseId: newGreenhouseId })
+      .eq('id', id);
+    if (error) console.warn('movePlot failed:', error.message);
   },
 }));

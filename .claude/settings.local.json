@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(\"bridge/venv/Scripts/python.exe\" supabase/apply_schema.py)",
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code}\\\\n' 'https://ydcdgwpfqkrjxucchccz.supabase.co/rest/v1/garden_items?select=id&limit=1' -H 'apikey: sb_publishable_vakRpbuGMKTRDuPScwiBuw_CG-kRwvD' -H 'Authorization: Bearer sb_publishable_vakRpbuGMKTRDuPScwiBuw_CG-kRwvD')",
+      "Bash(curl -s -o /dev/null -w 'greenhouses HTTP %{http_code}\\\\n' 'https://ydcdgwpfqkrjxucchccz.supabase.co/rest/v1/greenhouses?select=id&limit=1' -H 'apikey: sb_publishable_vakRpbuGMKTRDuPScwiBuw_CG-kRwvD' -H 'Authorization: Bearer sb_publishable_vakRpbuGMKTRDuPScwiBuw_CG-kRwvD')",
+      "Bash(curl -s -o /dev/null -w 'plots HTTP %{http_code}\\\\n' 'https://ydcdgwpfqkrjxucchccz.supabase.co/rest/v1/plots?select=id&limit=1' -H 'apikey: sb_publishable_vakRpbuGMKTRDuPScwiBuw_CG-kRwvD' -H 'Authorization: Bearer sb_publishable_vakRpbuGMKTRDuPScwiBuw_CG-kRwvD')"
+    ]
+  }
+}
