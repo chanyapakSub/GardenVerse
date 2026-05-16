@@ -1,10 +1,5 @@
 import { create } from 'zustand';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from '@/lib/supabase';
 
 // ===== ค่าคงที่สำหรับ Grid System =====
 export const GRID_SIZE = 10;        // 10x10 blocks
