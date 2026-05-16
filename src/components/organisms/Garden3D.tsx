@@ -29,6 +29,7 @@ function ItemsRenderer() {
   const selectItem = useStore((s) => s.selectItem);
   const setEditMode = useStore((s) => s.setEditMode);
   const isAddModalOpen = useStore((s) => s.isAddModalOpen);
+  const isAddPlantModalOpen = useStore((s) => s.isAddPlantModalOpen);
   const activeCareTool = useStore((s) => s.activeCareTool);
   const setAnimatingItemId = useStore((s) => s.setAnimatingItemId);
 
@@ -110,8 +111,8 @@ function ItemsRenderer() {
               </>
             )}
 
-            {/* ป้ายชื่อ - ซ่อนถ้าเปิด Modal หรือ Placement mode */}
-            {!isAddModalOpen && !placementMode && plant && (
+            {/* ป้ายชื่อ - ซ่อนถ้าเปิด Modal ใด ๆ หรือ Placement mode */}
+            {!isAddModalOpen && !isAddPlantModalOpen && !placementMode && plant && (
               <Html
                 position={[0, item.type === "pot" ? 0.6 : 0.4, 0]}
                 center
