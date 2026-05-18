@@ -218,6 +218,8 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem("current_user");
+    document.cookie = "is_authenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
     router.push("/login");
   };
 

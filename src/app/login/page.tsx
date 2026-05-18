@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mail, Lock, ArrowRight, User, Loader2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, User, Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,17 +30,105 @@ export default function LoginPage() {
     try {
       if (isLogin) {
         // ===== LOGIN =====
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
+        let loginEmail = email.trim();
+        const isAdminCreds =
+          (loginEmail.toLowerCase() === "admin" || loginEmail.toLowerCase() === "admin1234@gmail.com") &&
+          password === "admin1234";
+
+        if (isAdminCreds) {
+          loginEmail = "admin1234@gmail.com";
+        } else if (!loginEmail.includes("@")) {
+          // ค้นหา email จากตาราง profiles โดยใช้ username
+          const { data: profile, error: profileErr } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("username", loginEmail)
+            .maybeSingle();
+
+          if (profileErr || !profile || !profile.email) {
+            setError("ไม่พบชื่อผู้ใช้หรืออีเมลนี้ในระบบ");
+            setIsLoading(false);
+            return;
+          }
+          loginEmail = profile.email;
+        }
+
+        let { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email: loginEmail,
           password,
         });
 
+        // หากเป็นแอดมินแต่ล็อกอินไม่ผ่าน (อาจเพราะยังไม่มีบัญชีใน Supabase) ให้สมัครให้อัตโนมัติทันที
+        if (signInError && isAdminCreds) {
+          console.log("Creating admin account automatically...");
+          
+          // สมัครสมาชิกอัตโนมัติ
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: "admin1234@gmail.com",
+            password: "admin1234",
+            options: {
+              data: { username: "admin" },
+            },
+          });
+
+          if (!signUpError && signUpData.user) {
+            // บันทึกโปรไฟล์ลงในตาราง profiles
+            await supabase.from("profiles").insert({
+              id: signUpData.user.id,
+              username: "admin",
+              email: "admin1234@gmail.com",
+            });
+
+            // ลองเข้าสู่ระบบอีกครั้งหลังจากสมัครสำเร็จ
+            const retryAuth = await supabase.auth.signInWithPassword({
+              email: "admin1234@gmail.com",
+              password: "admin1234",
+            });
+            data = retryAuth.data;
+            signInError = retryAuth.error;
+          }
+        }
+
         if (signInError) {
-          setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+          if (signInError.message === "Invalid login credentials") {
+            setError("อีเมล/ชื่อผู้ใช้ หรือรหัสผ่านไม่ถูกต้อง");
+          } else if (signInError.message.includes("Email not confirmed")) {
+            setError("กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ");
+          } else {
+            setError(`เข้าสู่ระบบไม่สำเร็จ: ${signInError.message}`);
+          }
           return;
         }
 
-        if (data.session) {
+        if (data.session && data.user) {
+          // อัปเดต email ใน profiles table สำหรับผู้ใช้เก่า (หรืออัปเดตเพื่อความชัวร์)
+          await supabase
+            .from("profiles")
+            .update({ email: loginEmail })
+            .eq("id", data.user.id);
+
+          // ดึงข้อมูลโปรไฟล์เพื่อดึง username ที่แท้จริง
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("id", data.user.id)
+            .maybeSingle();
+
+          const usernameToStore = profile?.username || data.user.user_metadata?.username || "guest";
+
+          // บันทึกลง LocalStorage เพื่อความเข้ากันได้กับระบบเดิม
+          localStorage.setItem(
+            "current_user",
+            JSON.stringify({
+              id: data.user.id,
+              username: usernameToStore,
+              email: data.user.email,
+            })
+          );
+
+          // ตั้งค่า Cookie สำหรับ Middleware หรือระบบการป้องกันเส้นทาง
+          document.cookie = "is_authenticated=true; path=/; max-age=86400; SameSite=Lax";
+
           router.push("/home");
         }
       } else {
@@ -50,11 +139,15 @@ export default function LoginPage() {
         }
 
         // ตรวจสอบว่า username ซ้ำมั้ย
-        const { data: existingProfile } = await supabase
+        const { data: existingProfile, error: checkError } = await supabase
           .from("profiles")
           .select("username")
           .eq("username", username.trim())
-          .single();
+          .maybeSingle();
+
+        if (checkError) {
+          console.error("Username check error:", checkError);
+        }
 
         if (existingProfile) {
           setError("Username นี้ถูกใช้งานแล้ว กรุณาเลือก Username อื่น");
@@ -79,11 +172,12 @@ export default function LoginPage() {
           return;
         }
 
-        // บันทึก username ลง profiles table
+        // บันทึก username และ email ลง profiles table
         if (data.user) {
           const { error: profileError } = await supabase.from("profiles").insert({
             id: data.user.id,
             username: username.trim(),
+            email: email.trim(),
           });
 
           if (profileError && !profileError.message.includes("duplicate")) {
@@ -167,22 +261,22 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Email field */}
+          {/* Email or Username field */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-700 block ml-1" htmlFor="email">
-              Email Address
+              {isLogin ? "Email Address or Username" : "Email Address"}
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                 <Mail size={18} />
               </div>
               <input
-                type="email"
+                type={isLogin ? "text" : "email"}
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
-                placeholder="you@example.com"
+                placeholder={isLogin ? "you@example.com or username" : "you@example.com"}
                 required
                 suppressHydrationWarning
               />
@@ -206,22 +300,31 @@ export default function LoginPage() {
                 <Lock size={18} />
               </div>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
+                className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-gray-800 placeholder-gray-400"
                 placeholder="••••••••"
                 required
                 minLength={6}
                 suppressHydrationWarning
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                suppressHydrationWarning
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
+            suppressHydrationWarning
             className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/20 active:scale-[0.98] mt-2"
           >
             {isLoading ? (
@@ -239,6 +342,7 @@ export default function LoginPage() {
           {isLogin ? "ยังไม่มีบัญชีใช่ไหม? " : "มีบัญชีอยู่แล้วใช่ไหม? "}
           <button
             type="button"
+            suppressHydrationWarning
             onClick={() => {
               setIsLogin(!isLogin);
               setError("");
